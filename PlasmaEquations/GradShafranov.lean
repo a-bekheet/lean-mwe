@@ -70,25 +70,79 @@ theorem gs_g_flux_surface (x y : Vec3) (hψ : gs.flux.ψ x = gs.flux.ψ y) :
     gs.g_of_ψ (gs.flux.ψ x) = gs.g_of_ψ (gs.flux.ψ y) := by
   simp only [hψ]
 
+/-- Magnetic field from poloidal flux and current function in cylindrical coords:
+    B = (-∂ψ/∂Z / R, g(ψ)/R, ∂ψ/∂R / R). -/
+def magField (y : Vec3) : Vec3 := fun k =>
+  match k with
+  | ⟨0, _⟩ => -(1 / cylR y) * partialDeriv gs.flux.ψ 2 y
+  | ⟨1, _⟩ => gs.g_of_ψ (gs.flux.ψ y) / cylR y
+  | ⟨2, _⟩ => (1 / cylR y) * partialDeriv gs.flux.ψ 0 y
+
+/-- Current density from cylindrical Ampère's law (∇×B in cylindrical coords):
+    J_R = -(g'(ψ)/(μ₀R)) ∂ψ/∂Z,
+    J_φ = -Δ*ψ/(μ₀R),
+    J_Z =  (g'(ψ)/(μ₀R)) ∂ψ/∂R. -/
+def currentDensity (y : Vec3) : Vec3 := fun k =>
+  match k with
+  | ⟨0, _⟩ => -(deriv gs.g_of_ψ (gs.flux.ψ y) / (c.μ₀ * cylR y)) *
+                partialDeriv gs.flux.ψ 2 y
+  | ⟨1, _⟩ => -(GradShafranovOp gs.flux.ψ y) / (c.μ₀ * cylR y)
+  | ⟨2, _⟩ =>  (deriv gs.g_of_ψ (gs.flux.ψ y) / (c.μ₀ * cylR y)) *
+                partialDeriv gs.flux.ψ 0 y
+
 /-- The GS equation implies MHD equilibrium ∇p = J×B in cylindrical geometry.
-    (Requires expanding the cylindrical curl and cross product — sorry.) -/
-theorem gs_is_equilibrium (x : Vec3) :
+
+    Uses explicit cylindrical current density (not Cartesian curl) since the
+    metric factors differ. The proof applies the chain rule for p(ψ(x)) and
+    then uses the GS equation to match J×B component by component.
+
+    Requires `cylR x ≠ 0` (we are away from the axis R = 0). -/
+theorem gs_is_equilibrium (x : Vec3) (hR : cylR x ≠ 0)
+    (hψ_diff : DifferentiableAt ℝ gs.flux.ψ x) :
     ∀ j, partialDeriv gs.pressure j x =
-      fieldCross
-        (fun y => fun i => (1 / c.μ₀) * curl (fun z => fun k =>
-          -- Magnetic field in (R,φ,Z) from ψ and g
-          match k with
-          | ⟨0, _⟩ => -(1 / cylR z) * partialDeriv gs.flux.ψ 2 z
-          | ⟨1, _⟩ => gs.g_of_ψ (gs.flux.ψ z) / cylR z
-          | ⟨2, _⟩ => (1 / cylR z) * partialDeriv gs.flux.ψ 0 z
-          ) y i)
-        (fun y => fun k =>
-          match k with
-          | ⟨0, _⟩ => -(1 / cylR y) * partialDeriv gs.flux.ψ 2 y
-          | ⟨1, _⟩ => gs.g_of_ψ (gs.flux.ψ y) / cylR y
-          | ⟨2, _⟩ => (1 / cylR y) * partialDeriv gs.flux.ψ 0 y
-          ) x j := by
-  sorry
+      fieldCross (gs.currentDensity) (gs.magField) x j := by
+  intro j
+  -- Useful hypotheses
+  have hR0 : x 0 ≠ 0 := hR
+  have haxisym : partialDeriv gs.flux.ψ 1 x = 0 := gs.flux.axisym x
+  have hgs := gs.gs_equation x
+  have hμ₀ := c.hμ₀
+  -- Chain rule: ∂p/∂x_j = p'(ψ(x)) · ∂ψ/∂x_j
+  have hchain : partialDeriv gs.pressure j x =
+      deriv gs.p_of_ψ (gs.flux.ψ x) * partialDeriv gs.flux.ψ j x := by
+    simp only [partialDeriv]
+    -- Convert gs.pressure to composition form for chain rule
+    change (fderiv ℝ (gs.p_of_ψ ∘ gs.flux.ψ) x) (basisVec j) = _
+    have hp_at := gs.hp_diff.differentiableAt.hasFDerivAt (x := gs.flux.ψ x)
+    have hψ_at := hψ_diff.hasFDerivAt
+    rw [(hp_at.comp x hψ_at).fderiv, ContinuousLinearMap.comp_apply]
+    -- For L : ℝ →L[ℝ] ℝ, L v = v * L 1 = v * deriv p (ψ x)
+    set v := fderiv ℝ gs.flux.ψ x (basisVec j)
+    set L := fderiv ℝ gs.p_of_ψ (gs.flux.ψ x)
+    have hLv : L v = v * L 1 := by
+      have := L.map_smul v (1 : ℝ); simp only [smul_eq_mul, mul_one] at this; exact this
+    rw [hLv]; unfold deriv; ring
+  -- Clear denominators in GS equation for use in nlinarith
+  have hgs_mul : x 0 * partialDeriv2 gs.flux.ψ 0 x - partialDeriv gs.flux.ψ 0 x +
+      x 0 * partialDeriv2 gs.flux.ψ 2 x =
+      -(c.μ₀ * x 0 ^ 3 * deriv gs.p_of_ψ (gs.flux.ψ x)) -
+      x 0 * (gs.g_of_ψ (gs.flux.ψ x) * deriv gs.g_of_ψ (gs.flux.ψ x)) := by
+    have h := hgs; simp only [GradShafranovOp, cylR] at h; field_simp [hR0] at h; linarith
+  -- Expand and verify component by component
+  rw [hchain]
+  fin_cases j
+  · -- j = 0 (R-component): uses GS equation
+    simp [fieldCross, vec3Cross, crossProduct, currentDensity, magField, cylR, GradShafranovOp]
+    field_simp [hR0]
+    linear_combination partialDeriv gs.flux.ψ 0 x * hgs_mul
+  · -- j = 1 (φ-component): both sides vanish by axisymmetry
+    simp [fieldCross, vec3Cross, crossProduct, currentDensity, magField, cylR,
+          GradShafranovOp, haxisym]
+    ring
+  · -- j = 2 (Z-component): uses GS equation
+    simp [fieldCross, vec3Cross, crossProduct, currentDensity, magField, cylR, GradShafranovOp]
+    field_simp [hR0]
+    linear_combination partialDeriv gs.flux.ψ 2 x * hgs_mul
 
 /-- Solov'ev solution: when p(ψ) = p₀ψ and g²(ψ) = g₀² + 2αψ are linear,
     the GS equation becomes linear with constant coefficients on the RHS.
