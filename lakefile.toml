@@ -1,7 +1,7 @@
 name = "MaxwellWave"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["MaxwellWave"]
+defaultTargets = ["MaxwellWave", "PlasmaEquations"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -13,3 +13,6 @@ scope = "leanprover-community"
 
 [[lean_lib]]
 name = "MaxwellWave"
+
+[[lean_lib]]
+name = "PlasmaEquations"
