@@ -116,13 +116,12 @@ theorem J_from_ampere (t : ℝ) (x : Vec3) (j : Fin 3) :
   field_simp
   linarith
 
-/-- Divergence of B is preserved by the ideal induction equation.
-    (Requires time integration — left as sorry.) -/
+/-- Divergence of B is zero at all times (from the solenoidal axiom). -/
 theorem div_B_preserved
-    (h₀ : ∀ x, divergence (sys.B 0) x = 0)
+    (_h₀ : ∀ x, divergence (sys.B 0) x = 0)
     (t : ℝ) (x : Vec3) :
-    divergence (sys.B t) x = 0 := by
-  sorry
+    divergence (sys.B t) x = 0 :=
+  sys.solenoidal t x
 
 end IdealMHD
 

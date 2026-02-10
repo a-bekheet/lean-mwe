@@ -100,7 +100,40 @@ theorem gs_solovev_linear
     (x : Vec3) :
     GradShafranovOp gs.flux.ψ x =
       -(c.μ₀ * (cylR x)^2 * p₀) - α := by
-  sorry
+  -- From the GS equation axiom
+  have hgs := gs.gs_equation x
+  set ψ₀ := gs.flux.ψ x
+  -- Compute deriv p_of_ψ(ψ₀) = p₀ (derivative of linear function)
+  have hp_deriv : deriv gs.p_of_ψ ψ₀ = p₀ := by
+    rw [hp]
+    have hd : HasDerivAt (fun ψ_val => p₀ * ψ_val) p₀ ψ₀ := by
+      have := (hasDerivAt_id ψ₀).const_mul p₀
+      simpa [mul_one] using this
+    exact hd.deriv
+  -- Compute g(ψ₀) * g'(ψ₀) = α from g²(ψ) = g₀² + 2αψ
+  -- Differentiating: 2g·g' = 2α, so g·g' = α
+  have hgg : gs.g_of_ψ ψ₀ * deriv gs.g_of_ψ ψ₀ = α := by
+    have hgd : DifferentiableAt ℝ gs.g_of_ψ ψ₀ := gs.hg_diff.differentiableAt
+    have hg_sq_fn : (fun t => (gs.g_of_ψ t)^2) = (fun t => g₀_sq + 2 * α * t) :=
+      funext hg_sq
+    -- Derivatives must be equal
+    have hdeq : deriv (fun t => (gs.g_of_ψ t)^2) ψ₀ = deriv (fun t => g₀_sq + 2 * α * t) ψ₀ :=
+      congrArg (fun f => deriv f ψ₀) hg_sq_fn
+    -- LHS: deriv(g²) = 2·g·g' via product rule on g·g
+    have hLHS : deriv (fun t => (gs.g_of_ψ t)^2) ψ₀ =
+                2 * gs.g_of_ψ ψ₀ * deriv gs.g_of_ψ ψ₀ := by
+      have hsq : (fun t => (gs.g_of_ψ t)^2) = gs.g_of_ψ * gs.g_of_ψ := by
+        funext t; simp [Pi.mul_apply]; ring
+      rw [hsq, deriv_mul hgd hgd]; ring
+    -- RHS: deriv(g₀² + 2α·t) = 2α
+    have hRHS : deriv (fun t => g₀_sq + 2 * α * t) ψ₀ = 2 * α := by
+      have hd : HasDerivAt (fun t => g₀_sq + 2 * α * t) (2 * α) ψ₀ := by
+        have := ((hasDerivAt_id ψ₀).const_mul (2 * α)).const_add g₀_sq
+        simp only [mul_one] at this
+        convert this using 1
+      exact hd.deriv
+    linarith
+  rw [hgs, hp_deriv, hgg]
 
 end GradShafranovEquation
 

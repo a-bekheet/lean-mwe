@@ -91,13 +91,65 @@ theorem force_balance_cross_form (x : Vec3) (j : Fin 3) :
 
 /-- Magnetic pressure form of force balance:
     ∇p = (1/μ₀)((B·∇)B - ∇(B²/2)).
-    This uses the vector identity (∇×B)×B = (B·∇)B - ∇(|B|²/2).
-    (Requires the vector identity — left as sorry.) -/
+    Uses the vector identity `(∇×B)×B = (B·∇)B - ∇(|B|²/2)`.
+
+    The proof computes `∂(B²/2)/∂x_j = Σ_k B_k ∂B_k/∂x_j` via the product rule,
+    then verifies the algebraic identity component-by-component. -/
 theorem magnetic_pressure_form (x : Vec3) (j : Fin 3) :
     partialDeriv eq.p j x =
       (1 / c.μ₀) * (advectiveDerivVector eq.B eq.B x j -
         partialDeriv (fun y => (1/2) * vec3Dot (eq.B y) (eq.B y)) j x) := by
-  sorry
+  -- Abbreviations for partial derivatives: d i k = ∂B_k/∂x_i
+  let d : Fin 3 → Fin 3 → ℝ := fun i k => partialDerivComp eq.B i k x
+  -- Differentiability of B components
+  have hBdiff : ∀ k : Fin 3, DifferentiableAt ℝ (fun y => eq.B y k) x :=
+    fun k => eq.hB_smooth.differentiableAt k x
+  -- Step 1: LHS = (1/μ₀) * ((∇×B)×B)_j via force_balance + Ampère
+  rw [eq.force_balance_cross_form x j]
+  -- Step 2: Compute ∂(B²/2)/∂x_j using product rule
+  -- Each term: fderiv((1/2) * B_k²) = B_k * ∂B_k/∂x_j
+  have hBdiff : ∀ k : Fin 3, DifferentiableAt ℝ (fun y => eq.B y k) x :=
+    fun k => eq.hB_smooth.differentiableAt k x
+  have hterm : ∀ k : Fin 3,
+      fderiv ℝ (fun y => (1 : ℝ) / 2 * (eq.B y k * eq.B y k)) x (basisVec j) =
+      eq.B x k * d j k := by
+    intro k
+    have hBk := hBdiff k
+    -- Combine into one function equality: (1/2) * (B_k * B_k) = (1/2) • (B_k * B_k)
+    have hfn : (fun y => (1 : ℝ) / 2 * (eq.B y k * eq.B y k)) =
+               (((1 : ℝ) / 2) • ((fun y => eq.B y k) * (fun y => eq.B y k))) := by
+      funext y; simp only [Pi.smul_apply, Pi.mul_apply, smul_eq_mul]
+    rw [hfn, congrArg (· (basisVec j)) (fderiv_const_smul (hBk.mul hBk) _),
+        ContinuousLinearMap.smul_apply, smul_eq_mul,
+        congrArg (· (basisVec j)) (fderiv_mul hBk hBk),
+        ContinuousLinearMap.add_apply]
+    simp only [ContinuousLinearMap.smul_apply, smul_eq_mul, d, partialDerivComp]
+    ring
+  have hgrad_Bsq : partialDeriv (fun y => (1/2 : ℝ) * vec3Dot (eq.B y) (eq.B y)) j x =
+      ∑ k : Fin 3, eq.B x k * d j k := by
+    simp only [partialDeriv, vec3Dot, dotProduct, Fin.sum_univ_three]
+    -- Differentiability of each term
+    have hterm_diff : ∀ k : Fin 3, DifferentiableAt ℝ (fun y => (1 : ℝ) / 2 * (eq.B y k * eq.B y k)) x :=
+      fun k => (differentiableAt_const _).mul ((hBdiff k).mul (hBdiff k))
+    -- Split the function into three addends
+    have hfn : (fun y => (1 : ℝ) / 2 * (eq.B y 0 * eq.B y 0 + eq.B y 1 * eq.B y 1 + eq.B y 2 * eq.B y 2)) =
+               ((fun y => (1 : ℝ) / 2 * (eq.B y 0 * eq.B y 0)) +
+                (fun y => (1 : ℝ) / 2 * (eq.B y 1 * eq.B y 1)) +
+                (fun y => (1 : ℝ) / 2 * (eq.B y 2 * eq.B y 2))) := by
+      funext y; simp [Pi.add_apply]; ring
+    rw [hfn, congrArg (· (basisVec j)) (fderiv_add (hterm_diff 0 |>.add (hterm_diff 1)) (hterm_diff 2)),
+        ContinuousLinearMap.add_apply,
+        congrArg (· (basisVec j)) (fderiv_add (hterm_diff 0) (hterm_diff 1)),
+        ContinuousLinearMap.add_apply,
+        hterm 0, hterm 1, hterm 2]
+  -- Step 3: Now show the algebraic identity
+  rw [hgrad_Bsq]
+  simp only [fieldCross, vec3Cross, crossProduct, curl, partialDerivComp, Fin.isValue,
+             advectiveDerivVector, Fin.sum_univ_three, d]
+  have hJ : ∀ i, eq.J x i = (1 / c.μ₀) * curl eq.B x i := by
+    intro i; have h := eq.ampere x i; have hμ := c.μ₀_ne_zero
+    field_simp; linarith
+  fin_cases j <;> simp [Fin.isValue] <;> ring
 
 end MHDEquilibrium
 

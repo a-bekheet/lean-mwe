@@ -151,12 +151,14 @@ variable {c : MHDConstants} (rot : RotamakSystem c)
 /-- Ampère consistency: the current direction must be consistent with
     field reversal. Specifically, J_θ > 0 in the region where B_z
     decreases (inside the separatrix).
-    (Requires analysis of the sign of dB_z/dR — left as sorry.) -/
+    From Ampère: dB_z/dR = -μ₀ J_θ, so dB_z/dR < 0 ⟹ J_θ > 0. -/
 theorem rotamak_ampere_consistency
-    (R : ℝ) (hR : 0 < R) (hR_lt : R < rot.R_s)
+    (R : ℝ) (_hR : 0 < R) (_hR_lt : R < rot.R_s)
     (hBz_decreasing : deriv rot.B_z R < 0) :
     0 < rot.J_θ R := by
-  sorry
+  have hampere := rot.ampere_1d R
+  have hμ₀ := c.hμ₀
+  nlinarith
 
 end RotamakSystem
 

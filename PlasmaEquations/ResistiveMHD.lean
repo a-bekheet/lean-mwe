@@ -88,12 +88,26 @@ theorem resistive_reduces_to_ideal
 
 /-- The resistive induction equation in diffusion form:
     ∂B/∂t = ∇×(v×B) - η∇×J.
-    (Requires curl linearity with differentiability hypotheses — left as sorry.) -/
-theorem resistive_induction_diffusion_form (t : ℝ) (x : Vec3) (j : Fin 3) :
+    Splits curl(v×B - ηJ) = curl(v×B) - η·curl(J) using curl linearity. -/
+theorem resistive_induction_diffusion_form (t : ℝ) (x : Vec3) (j : Fin 3)
+    (hvxB : ∀ i : Fin 3, DifferentiableAt ℝ
+      (fun y => vec3Cross (sys.v t y) (sys.B t y) i) x) :
     timeDerivComp sys.B j t x =
       curl (fun y => vec3Cross (sys.v t y) (sys.B t y)) x j -
         ohm.η * curl (sys.J t) x j := by
-  sorry
+  have hinduction := sys.induction_eq t x j
+  rw [hinduction]
+  have hJ_diff : ∀ i : Fin 3, DifferentiableAt ℝ (fun y => sys.J t y i) x :=
+    fun i => (sys.hJ_smooth t).differentiableAt i x
+  have hηJ_diff : ∀ i : Fin 3, DifferentiableAt ℝ (fun y => (-ohm.η) * sys.J t y i) x :=
+    fun i => (differentiableAt_const (-ohm.η)).mul (hJ_diff i)
+  have step1 : curl (fun y i => vec3Cross (sys.v t y) (sys.B t y) i - ohm.η * sys.J t y i) x j =
+               curl (fun y i => vec3Cross (sys.v t y) (sys.B t y) i + (-ohm.η) * sys.J t y i) x j := by
+    congr 1; funext y; funext i; ring
+  rw [step1]
+  rw [curl_add _ _ x hvxB hηJ_diff j]
+  rw [curl_const_mul (-ohm.η) (sys.J t) x hJ_diff j]
+  ring
 
 end ResistiveMHD
 
