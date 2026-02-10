@@ -16,3 +16,6 @@ name = "MaxwellWave"
 
 [[lean_lib]]
 name = "PlasmaEquations"
+
+[[lean_lib]]
+name = "MatlibDraft"
