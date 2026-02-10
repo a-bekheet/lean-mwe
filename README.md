@@ -1,12 +1,17 @@
-# MaxwellWave
+# Formal Plasma Physics in Lean 4
 
-A fully verified formalization of the **electromagnetic wave equations** in [Lean 4](https://lean-lang.org/) with [Mathlib](https://leanprover-community.github.io/mathlib4_docs/). Starting from Maxwell's equations in differential form, we derive the wave equations for the electric field **E** and magnetic field **B** in three types of linear media: vacuum, lossless dielectrics, and lossy conductors.
+A fully verified formalization of **electromagnetic wave equations** and **plasma equilibrium physics** in [Lean 4](https://lean-lang.org/) with [Mathlib](https://leanprover-community.github.io/mathlib4_docs/). Two modules build from first principles:
 
-**Every proof is machine-checked. There are zero `sorry` axioms.**
+1. **MaxwellWave** — Maxwell's equations to electromagnetic wave equations in vacuum, dielectrics, and conductors
+2. **PlasmaEquations** — Fluid plasma theory from two-fluid equations through MHD to tokamak (Grad-Shafranov) and rotamak (FRC) equilibria
 
-## What Is This?
+**Every proof is machine-checked. There are zero `sorry` axioms across both modules.**
 
-This project formalizes one of the most important results in classical electrodynamics: that Maxwell's equations imply electromagnetic waves travel at the speed of light. Specifically, we prove:
+---
+
+## MaxwellWave
+
+Formalizes one of the most important results in classical electrodynamics: that Maxwell's equations imply electromagnetic waves travel at the speed of light.
 
 | Medium | Wave Equation |
 |--------|--------------|
@@ -17,8 +22,6 @@ This project formalizes one of the most important results in classical electrody
 (And the same for **B** in each case.)
 
 The conductor equation is the **telegraph equation** (damped wave equation), where the `mu * sigma * dE/dt` term causes exponential attenuation (the skin effect).
-
-## Mathematical Content
 
 ### Vector Calculus Layer (`VectorCalculus.lean`)
 
@@ -42,26 +45,14 @@ All differential operators are built on Mathlib's Frechet derivative (`fderiv`):
 | `curl_add` | `curl(F + G) = curl(F) + curl(G)` |
 | `curl_const_mul` | `curl(c * F) = c * curl(F)` |
 
-The **curl-curl identity** is the critical bridge from Maxwell's equations to the wave equation. Its proof is the most involved in the project (100+ lines), requiring component-by-component expansion across all three spatial dimensions, `fderiv_sub` to split derivatives of differences, and `fderiv_apply_comm` for mixed-partial symmetry.
-
-The **Clairaut/Schwarz theorem** (`fderiv_apply_comm`) connects our `fderiv`-based partial derivatives to Mathlib's `IsSymmSndFDerivAt` via the chain rule for continuous linear map evaluation (`fderiv_clm_apply`).
-
 ### Electrodynamics Layer (`Maxwell.lean`)
 
-Defines the mathematical structures:
-
-- **`Medium`**: Linear, isotropic, homogeneous medium with permittivity `eps`, permeability `mu`, and conductivity `sigma` (all positive reals)
-- **`MaxwellSystem`**: The four Maxwell equations in differential form:
-  1. Gauss's law: `div E = rho / eps`
-  2. No monopoles: `div B = 0`
-  3. Faraday's law: `curl E = -dB/dt`
-  4. Ampere-Maxwell: `curl B = mu * (J_free + sigma * E) + mu * eps * dE/dt`
+- **`Medium`**: Linear, isotropic, homogeneous medium with permittivity `eps`, permeability `mu`, and conductivity `sigma`
+- **`MaxwellSystem`**: The four Maxwell equations in differential form
 - **`SourceFreeMaxwell`**: Specialization with `rho = 0` and `J_free = 0`
 - **Constructors**: `vacuum`, `dielectric`, `conductor` with appropriate parameter constraints
 
 ### Wave Equation Layer (`WaveEquation.lean`)
-
-#### General Wave Equations
 
 The unified result from which all special cases follow:
 
@@ -73,26 +64,6 @@ theorem general_wave_equation_B :
     nabla^2 B(t,x)_j = mu * eps * d^2 B_j/dt^2 + mu * sigma * dB_j/dt
 ```
 
-**Derivation strategy for E** (10 proof steps):
-1. Curl-curl identity: `curl(curl E) = grad(div E) - nabla^2 E`
-2. Source-free Gauss (`div E = 0`): `nabla^2 E = -curl(curl E)`
-3. Faraday's law: `curl E = -dB/dt`
-4. Distribute curl over negation
-5. Commute curl with time derivative
-6. Substitute Ampere-Maxwell for `curl B`
-7. Linearity of time derivative to split the sum
-8. Rearrange
-
-**Derivation strategy for B** (6 proof steps):
-1. Curl-curl + `div B = 0`: `nabla^2 B = -curl(curl B)`
-2. Ampere as function equality
-3. Curl linearity (`curl_add`, `curl_const_mul`) to distribute
-4. Faraday substitution
-5. Commute curl/time derivatives
-6. `deriv_neg` and rearrange
-
-#### Specialized Theorems
-
 | Theorem | Medium | Equation |
 |---------|--------|----------|
 | `vacuum_wave_equation_E/B` | `sigma = 0`, `eps_0`, `mu_0` | `nabla^2 F = mu_0 * eps_0 * d^2F/dt^2` |
@@ -101,34 +72,149 @@ theorem general_wave_equation_B :
 | `vacuum_wave_speed` | vacuum | `c = 1 / sqrt(mu_0 * eps_0)` |
 | `dielectric_wave_speed_sq` | dielectric | `v^2 = 1 / (mu * eps)` |
 
-### Proof Sketches (`ProofSketch.lean`)
+---
 
-Contains the step-by-step derivation for the curl-of-Faraday intermediate result (`curl_of_faraday`), which shows `curl(curl E) = -d(curl B)/dt` — the first step in the wave equation derivation.
+## PlasmaEquations
+
+Builds from the MaxwellWave foundation through fluid plasma theory to reach tokamak and rotamak equilibrium equations. The mathematical path:
+
+```
+Maxwell's equations
+    |
+    v
+Two-fluid plasma equations (ions + electrons)
+    |
+    v
+Single-fluid ideal MHD (mass-weighted averages, quasi-neutrality)
+    |                     \
+    v                      v
+Resistive MHD          MHD Equilibrium (force balance: nabla p = J x B)
+                           |                    \
+                           v                     v
+                   Grad-Shafranov             FRC / Rotamak
+                   (Tokamak)                  (Rotamak)
+```
+
+### Vector Algebra (`VectorAlgebra.lean`)
+
+Cross product, dot product, and field-level algebra on R^3 vector fields, built atop Mathlib's `crossProduct` and `dotProduct`.
+
+| Lemma | Statement |
+|-------|-----------|
+| `cross_anticomm_field` | `F(x) x G(x) = -(G(x) x F(x))` |
+| `fieldDot_self_cross_eq_zero` | `F(x) . (F(x) x G(x)) = 0` |
+| `fieldDot_cross_self_eq_zero` | `(F(x) x G(x)) . G(x) = 0` |
+
+### Fluid Operators (`FluidOperators.lean`)
+
+- **Advective derivative**: `(v . nabla)f` and `(v . nabla)F`
+- **Material derivative**: `Df/Dt = df/dt + (v . nabla)f`
+
+### Ideal MHD (`SingleFluidMHD.lean`)
+
+The `IdealMHD` structure encodes the six coupled equations as axioms:
+
+1. **Mass conservation**: `d rho/dt + nabla . (rho v) = 0`
+2. **Momentum**: `rho Dv/Dt = J x B - nabla p`
+3. **Energy (adiabatic)**: `dp/dt + v . nabla p + gamma p nabla . v = 0`
+4. **Induction**: `dB/dt = nabla x (v x B)`
+5. **Solenoidal**: `nabla . B = 0`
+6. **Ampere (MHD limit)**: `nabla x B = mu_0 J`
+
+| Theorem | Statement |
+|---------|-----------|
+| `ideal_induction_from_faraday_ohm` | Faraday + ideal Ohm's law implies the induction equation |
+| `J_from_ampere` | `J = (nabla x B) / mu_0` |
+| `div_B_preserved` | Solenoidal constraint holds at all times |
+
+### Resistive MHD (`ResistiveMHD.lean`)
+
+Extends ideal MHD with finite resistivity eta. The induction equation becomes `dB/dt = nabla x (v x B - eta J)`.
+
+| Theorem | Statement |
+|---------|-----------|
+| `resistive_reduces_to_ideal` | Setting `eta = 0` recovers the ideal induction equation |
+| `resistive_induction_diffusion_form` | `dB/dt = nabla x (v x B) - eta nabla x J` via curl linearity |
+
+### MHD Equilibrium (`MHDEquilibrium.lean`)
+
+Static force balance `nabla p = J x B` with Ampere's law and solenoidal constraint.
+
+| Theorem | Statement |
+|---------|-----------|
+| `B_dot_grad_p_eq_zero` | `B . nabla p = 0` (B lies on pressure surfaces) |
+| `J_dot_grad_p_eq_zero` | `J . nabla p = 0` (J lies on pressure surfaces) |
+| `force_balance_cross_form` | `nabla p = (1/mu_0)(nabla x B) x B` |
+| `magnetic_pressure_form` | `nabla p = (1/mu_0)((B . nabla)B - nabla(B^2/2))` |
+
+### Grad-Shafranov / Tokamak (`GradShafranov.lean`)
+
+The central equation of tokamak equilibrium theory for axisymmetric plasmas:
+
+```
+Delta* psi = -mu_0 R^2 p'(psi) - g(psi) g'(psi)
+```
+
+where `Delta* = d^2/dR^2 - (1/R) d/dR + d^2/dZ^2` is the Grad-Shafranov operator, `p(psi)` is the pressure profile, and `g(psi) = R B_phi` is the poloidal current function.
+
+| Theorem | Statement |
+|---------|-----------|
+| `gs_pressure_flux_surface` | Pressure is constant on flux surfaces |
+| `gs_is_equilibrium` | The GS equation implies `nabla p = J x B` in cylindrical geometry |
+| `gs_solovev_linear` | For linear `p(psi)` and `g^2(psi)`, the GS equation has constant RHS |
+
+The `gs_is_equilibrium` proof uses the chain rule for composite scalar fields (`p(psi(x))`), explicit cylindrical current density from Ampere's law (not the Cartesian curl, which gives incorrect metric factors), and the `linear_combination` tactic to algebraically verify each component against the GS equation.
+
+### Rotamak / FRC (`RotamakFRC.lean`)
+
+A Field-Reversed Configuration (FRC) is a compact toroid where the poloidal field reverses direction. A Rotamak sustains the FRC via a Rotating Magnetic Field (RMF) drive.
+
+| Theorem | Statement |
+|---------|-----------|
+| `frc_no_toroidal_balance` | With `B_theta = 0`, radial balance simplifies |
+| `frc_total_pressure_conservation` | `p + B^2/(2 mu_0) = const` in theta-pinch limit |
+| `frc_beta_at_separatrix` | `beta = 1` at the separatrix (where `B_z = 0`) |
+| `rotamak_ampere_consistency` | `J_theta > 0` where `B_z` decreases (current drives field reversal) |
+
+---
 
 ## Project Structure
 
 ```
 MaxwellWave/
-  VectorCalculus.lean   -- Differential operators + vector calculus identities (347 lines)
-  Maxwell.lean          -- Medium, MaxwellSystem, SourceFreeMaxwell (164 lines)
-  WaveEquation.lean     -- Wave equation derivations for all media (301 lines)
-  ProofSketch.lean      -- Intermediate result + documentation (111 lines)
-MaxwellWave.lean        -- Root module (imports all)
+  VectorCalculus.lean   -- Differential operators + identities (347 lines)
+  Maxwell.lean          -- Medium, MaxwellSystem (164 lines)
+  WaveEquation.lean     -- Wave equation derivations (301 lines)
+  ProofSketch.lean      -- Intermediate result + docs (111 lines)
+MaxwellWave.lean        -- Root module
+
+PlasmaEquations/
+  VectorAlgebra.lean      -- Cross/dot product, field algebra (96 lines)
+  FluidOperators.lean     -- Advective/material derivatives (51 lines)
+  LorentzForce.lean       -- Electromagnetic force on fluids (37 lines)
+  TwoFluid.lean           -- Two-fluid plasma equations (65 lines)
+  SingleFluidMHD.lean     -- Ideal MHD system (128 lines)
+  ResistiveMHD.lean       -- Resistive MHD + Ohm's law (114 lines)
+  MHDEquilibrium.lean     -- Static force balance (156 lines)
+  CylindricalCoords.lean  -- Cylindrical coordinates + GS operator (64 lines)
+  GradShafranov.lean      -- Tokamak equilibrium (193 lines)
+  RotamakFRC.lean         -- Rotamak / FRC equilibrium (165 lines)
+PlasmaEquations.lean      -- Root module
+
 lakefile.toml           -- Build configuration
 lean-toolchain          -- Lean version pin
 ```
 
-**Total**: ~930 lines of Lean 4 across 5 source files.
-
 ## Proof Statistics
 
-| Category | Count |
-|----------|-------|
-| Definitions | 20 |
-| Structures | 4 |
-| Theorems | 17 |
-| Lemmas | 8 |
-| `sorry` axioms | **0** |
+| | MaxwellWave | PlasmaEquations | **Total** |
+|--|-------------|-----------------|-----------|
+| Lines of Lean 4 | ~930 | ~1,080 | **~2,010** |
+| Definitions | 20 | 23 | **43** |
+| Structures | 4 | 12 | **16** |
+| Theorems | 17 | 18 | **35** |
+| Lemmas | 8 | 9 | **17** |
+| `sorry` axioms | **0** | **0** | **0** |
 
 ## Dependencies
 
@@ -140,6 +226,7 @@ Key Mathlib imports:
 - `Mathlib.Analysis.Calculus.FDeriv.Symmetric` — `IsSymmSndFDerivAt` (Clairaut's theorem)
 - `Mathlib.Analysis.Calculus.ContDiff.Defs` — Smoothness classes (`ContDiff`)
 - `Mathlib.Analysis.InnerProductSpace.PiL2` — Inner product on `Fin n -> R`
+- `Mathlib.LinearAlgebra.CrossProduct` — Cross product on `Fin 3 -> R`
 
 ## Building
 
@@ -161,7 +248,7 @@ lake exe cache get
 lake build
 ```
 
-A successful build with zero errors and zero warnings (other than unused variable lints) confirms that every proof is verified by Lean's kernel.
+A successful build with zero errors and zero warnings confirms that every proof is verified by Lean's kernel.
 
 ## Design Decisions
 
@@ -179,50 +266,13 @@ This extracts the partial derivative in direction `i` by evaluating the total de
 
 Using `Fin 3 -> R` (aliased as `Vec3`) keeps things simple and avoids the coercion overhead of `EuclideanSpace`. Since we don't need the Euclidean space structure beyond what `PiLp` provides, the function type is sufficient and more ergonomic.
 
-### Why `ContDiff R 2` for smoothness?
+### Structure-with-axioms pattern
 
-The symmetry of mixed partial derivatives (Clairaut's theorem) requires C^2 smoothness. This is the minimal regularity assumption needed for our proofs. The `IsC2Vector` predicate requires each component `fun x => F x j` to be C^2, which is sufficient to derive differentiability of `fderiv` (via `ContDiff.fderiv_right`) and the symmetry result (via `IsSymmSndFDerivAt`).
+Physical systems (Maxwell, ideal MHD, resistive MHD, equilibria) are modeled as Lean `structure`s where the physical equations appear as fields of type `Prop`. This is the same approach used in Mathlib for algebraic structures. For example, `IdealMHD` bundles the field variables `rho, v, p, B, J` with six axioms (mass conservation, momentum, energy, induction, solenoidal, Ampere). Theorems are then consequences derived from the axioms.
 
-### Why `SufficientlySmooth` as a structure?
+### Cylindrical vs Cartesian curl
 
-The wave equation derivation requires several regularity conditions beyond spatial C^2:
-- **Curl-time commutativity**: swapping `curl` with `d/dt` (a Leibniz integral rule consequence)
-- **Time differentiability**: components and their time derivatives must be differentiable in `t`
-
-Rather than threading these as separate hypotheses through every theorem, we bundle them in `SufficientlySmooth`. This is physically reasonable — real electromagnetic fields are smooth — and keeps the theorem statements clean.
-
-### Why separate `general_wave_equation_E` and `_B`?
-
-The derivations for E and B follow different paths:
-- **E**: curl Faraday -> substitute Ampere -> derivative linearity
-- **B**: curl Ampere -> curl linearity to distribute -> substitute Faraday -> `deriv_neg`
-
-The B derivation requires curl linearity (`curl_add`, `curl_const_mul`) because Ampere's law has a sum `mu * sigma * E + mu * eps * dE/dt` inside the curl, while Faraday's law has a single term.
-
-## Technical Challenges
-
-### Differentiability Threading
-
-The main difficulty in this formalization is not the mathematics but the **differentiability bookkeeping**. Every use of `fderiv_sub`, `fderiv_add`, or `fderiv_const_smul` requires a `DifferentiableAt` proof for each operand. When the operand is itself an `fderiv` application (as in second derivatives), you need:
-
-1. `ContDiff R 2 f` (C^2 hypothesis)
-2. `ContDiff R 1 (fderiv R f)` (via `ContDiff.fderiv_right`)
-3. `DifferentiableAt R (fderiv R f) x` (via `.differentiable.differentiableAt`)
-4. `DifferentiableAt R (fun y => fderiv R f y v) x` (via `.clm_apply`)
-
-This chain appears repeatedly throughout the proofs.
-
-### `WithTop ENNReal` Coercions
-
-Lean's smoothness order has type `WithTop NNInfty` (written `WithTop ℕ∞`). The coercion `(2 : ℕ) -> WithTop ℕ∞` sometimes requires `norm_num` rather than `simp` to resolve arithmetic goals like `1 + 1 <= 2` at this type.
-
-### CLM Evaluation Chain
-
-The proof of `fderiv_apply_comm` requires connecting:
-```
-fderiv R (fun y => fderiv R f y v) x w
-```
-to Mathlib's `IsSymmSndFDerivAt`. The bridge is `fderiv_clm_apply`, which gives a product-rule decomposition for evaluating a CLM-valued function at a point. With a constant second argument and `simp`, this reduces to `(fderiv R (fderiv R f) x).flip v`, from which symmetry follows.
+The `gs_is_equilibrium` proof uses explicit cylindrical current density definitions rather than applying the Cartesian `curl` to cylindrical field components. This is necessary because the Cartesian curl gives incorrect results when applied to cylindrical coordinates (the metric factors differ, specifically the Z-component of current differs by `-g(psi)/R^2`).
 
 ## Related Work
 

@@ -145,8 +145,7 @@ theorem gs_is_equilibrium (x : Vec3) (hR : cylR x ≠ 0)
     linear_combination partialDeriv gs.flux.ψ 2 x * hgs_mul
 
 /-- Solov'ev solution: when p(ψ) = p₀ψ and g²(ψ) = g₀² + 2αψ are linear,
-    the GS equation becomes linear with constant coefficients on the RHS.
-    (Straightforward but tedious differentiation — sorry.) -/
+    the GS equation becomes linear with constant coefficients on the RHS. -/
 theorem gs_solovev_linear
     (p₀ g₀_sq α : ℝ)
     (hp : gs.p_of_ψ = fun ψ_val => p₀ * ψ_val)
