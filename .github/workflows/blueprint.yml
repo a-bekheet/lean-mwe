@@ -29,9 +29,6 @@ jobs:
       - name: Get Mathlib cache
         run: lake exe cache get
 
-      - name: Update manifest
-        run: lake update checkdecls «doc-gen4»
-
       - name: Build project
         run: lake build
 
@@ -48,6 +45,7 @@ jobs:
 
       - name: Build blueprint
         run: leanblueprint web
+        working-directory: blueprint/src
 
       - name: Check declarations
         run: leanblueprint checkdecls
