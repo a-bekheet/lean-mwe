@@ -30,7 +30,9 @@ jobs:
         run: lake exe cache get
 
       - name: Build project
-        run: lake build
+        run: |
+          lake build
+          lake build MatlibDraft
 
       - name: Install Python
         uses: actions/setup-python@v5
