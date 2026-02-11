@@ -161,7 +161,7 @@ defined by explicit pattern matching on the three components.
 \leanok
 \uses{def:partialDeriv2}
 Scalar Laplacian:
-$(\lapl_s f)(x) = \sum_{i=0}^{2} \pdd{f}{x_i}(x)$.
+$(\scalarlapl f)(x) = \sum_{i=0}^{2} \pdd{f}{x_i}(x)$.
 \end{definition}
 
 \begin{definition}[vectorLaplacian]
@@ -1211,7 +1211,7 @@ The vortex stretching term $(\vect{\omega}\cdot\grad)\vect{v}$ is unique to 3D.
 \leanok
 \uses{def:IncompressibleNS, def:NSSmoothness, def:scalarLaplacian, def:partialDerivComp, def:divergence, lem:fderiv_apply_comm, lem:partialDerivComp_differentiable}
 \[
-\lapl_s p = -\rho\sum_{i,k}\pd{v_k}{x_i}\pd{v_i}{x_k} + \divg\vect{f}.
+\scalarlapl p = -\rho\sum_{i,k}\pd{v_k}{x_i}\pd{v_i}{x_k} + \divg\vect{f}.
 \]
 The pressure is determined as a constraint enforcing incompressibility.
 \end{theorem}
