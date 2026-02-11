@@ -44,11 +44,12 @@ jobs:
         run: pip install leanblueprint
 
       - name: Build blueprint
-        run: leanblueprint web
-        working-directory: blueprint/src
+        run: |
+          cd blueprint/src
+          plastex -c plastex.cfg web.tex
 
       - name: Check declarations
-        run: leanblueprint checkdecls
+        run: lake exe checkdecls blueprint/lean_decls
 
       - name: Copy blueprint
         run: |
