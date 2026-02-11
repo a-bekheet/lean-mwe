@@ -1,0 +1,21 @@
+% In this file you should put all LaTeX macros and settings to be used both by
+% the pdf version and the web version.
+
+\newtheorem{theorem}{Theorem}[chapter]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+
+% Physics notation
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\grad}{\nabla}
+\newcommand{\divg}{\nabla\!\cdot\!}
+\newcommand{\curl}{\nabla\!\times\!}
+\newcommand{\lapl}{\nabla^2}
+\newcommand{\pd}[2]{\frac{\partial #1}{\partial #2}}
+\newcommand{\pdd}[2]{\frac{\partial^2 #1}{\partial #2^2}}
+\newcommand{\Dt}[1]{\frac{D #1}{D t}}
+\newcommand{\vect}[1]{\mathbf{#1}}

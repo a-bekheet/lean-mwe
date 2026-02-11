@@ -1,0 +1,1217 @@
+% Blueprint content for lean-mwe
+% Organized into 4 chapters mirroring the Lean module hierarchy.
+
+\chapter{Vector Calculus Foundation}
+\label{chap:vectorcalc}
+
+This chapter establishes the vector calculus infrastructure on $\R^3$
+built atop Mathlib's Fréchet derivative \texttt{fderiv}.
+
+\section{Basic Types}
+
+\begin{definition}[Vec3]
+\label{def:Vec3}
+\lean{MaxwellWave.Vec3}
+\leanok
+A point or vector in $\R^3$: the type $\mathrm{Fin}\,3 \to \R$.
+\end{definition}
+
+\begin{definition}[ScalarField]
+\label{def:ScalarField}
+\lean{MaxwellWave.ScalarField}
+\leanok
+\uses{def:Vec3}
+A scalar field $f : \R^3 \to \R$.
+\end{definition}
+
+\begin{definition}[VectorField]
+\label{def:VectorField}
+\lean{MaxwellWave.VectorField}
+\leanok
+\uses{def:Vec3}
+A vector field $\vect{F} : \R^3 \to \R^3$.
+\end{definition}
+
+\begin{definition}[TDScalarField]
+\label{def:TDScalarField}
+\lean{MaxwellWave.TDScalarField}
+\leanok
+\uses{def:Vec3}
+A time-dependent scalar field $f : \R \to \R^3 \to \R$.
+\end{definition}
+
+\begin{definition}[TDVectorField]
+\label{def:TDVectorField}
+\lean{MaxwellWave.TDVectorField}
+\leanok
+\uses{def:Vec3}
+A time-dependent vector field $\vect{F} : \R \to \R^3 \to \R^3$.
+\end{definition}
+
+\section{Partial Derivatives}
+
+\begin{definition}[basisVec]
+\label{def:basisVec}
+\lean{MaxwellWave.basisVec}
+\leanok
+The $i$-th standard basis vector $\vect{e}_i = \mathrm{Pi.single}\;i\;1$.
+\end{definition}
+
+\begin{definition}[partialDeriv]
+\label{def:partialDeriv}
+\lean{MaxwellWave.partialDeriv}
+\leanok
+\uses{def:ScalarField, def:basisVec}
+Partial derivative of a scalar field:
+$\pd{f}{x_i}(x) = (\mathrm{fderiv}\;\R\;f\;x)(\vect{e}_i)$.
+\end{definition}
+
+\begin{definition}[partialDerivComp]
+\label{def:partialDerivComp}
+\lean{MaxwellWave.partialDerivComp}
+\leanok
+\uses{def:VectorField, def:basisVec}
+Partial derivative of a vector field component:
+$\pd{F_j}{x_i}(x) = (\mathrm{fderiv}\;\R\;(y \mapsto F(y)_j)\;x)(\vect{e}_i)$.
+\end{definition}
+
+\begin{definition}[partialDeriv2]
+\label{def:partialDeriv2}
+\lean{MaxwellWave.partialDeriv2}
+\leanok
+\uses{def:partialDeriv, def:basisVec}
+Second partial derivative of a scalar field: $\pdd{f}{x_i}$.
+\end{definition}
+
+\begin{definition}[partialDerivComp2]
+\label{def:partialDerivComp2}
+\lean{MaxwellWave.partialDerivComp2}
+\leanok
+\uses{def:partialDerivComp, def:basisVec}
+Second partial derivative of a vector field component: $\pdd{F_j}{x_i}$.
+\end{definition}
+
+\begin{definition}[timeDeriv]
+\label{def:timeDeriv}
+\lean{MaxwellWave.timeDeriv}
+\leanok
+\uses{def:TDScalarField}
+Time derivative of a time-dependent scalar field:
+$\pd{f}{t}(t, x) = \mathrm{deriv}\;(s \mapsto f(s, x))\;t$.
+\end{definition}
+
+\begin{definition}[timeDerivComp]
+\label{def:timeDerivComp}
+\lean{MaxwellWave.timeDerivComp}
+\leanok
+\uses{def:TDVectorField}
+Time derivative of a time-dependent vector field component:
+$\pd{F_j}{t}(t, x) = \mathrm{deriv}\;(s \mapsto F(s, x)_j)\;t$.
+\end{definition}
+
+\begin{definition}[timeDeriv2]
+\label{def:timeDeriv2}
+\lean{MaxwellWave.timeDeriv2}
+\leanok
+\uses{def:timeDeriv}
+Second time derivative of a scalar field: $\pdd{f}{t}$.
+\end{definition}
+
+\begin{definition}[timeDerivComp2]
+\label{def:timeDerivComp2}
+\lean{MaxwellWave.timeDerivComp2}
+\leanok
+\uses{def:timeDerivComp}
+Second time derivative of a vector field component: $\pdd{F_j}{t}$.
+\end{definition}
+
+\section{Vector Calculus Operators}
+
+\begin{definition}[gradient]
+\label{def:gradient}
+\lean{MaxwellWave.gradient}
+\leanok
+\uses{def:partialDeriv}
+Gradient of a scalar field:
+$(\grad f)(x)_i = \pd{f}{x_i}(x)$.
+\end{definition}
+
+\begin{definition}[divergence]
+\label{def:divergence}
+\lean{MaxwellWave.divergence}
+\leanok
+\uses{def:partialDerivComp}
+Divergence of a vector field:
+$(\divg \vect{F})(x) = \sum_{i=0}^{2} \pd{F_i}{x_i}(x)$.
+\end{definition}
+
+\begin{definition}[curl]
+\label{def:curl}
+\lean{MaxwellWave.curl}
+\leanok
+\uses{def:partialDerivComp}
+Curl of a vector field:
+$(\curl \vect{F})_k = \varepsilon_{kij}\,\pd{F_j}{x_i}$,
+defined by explicit pattern matching on the three components.
+\end{definition}
+
+\begin{definition}[scalarLaplacian]
+\label{def:scalarLaplacian}
+\lean{MaxwellWave.scalarLaplacian}
+\leanok
+\uses{def:partialDeriv2}
+Scalar Laplacian:
+$(\lapl_s f)(x) = \sum_{i=0}^{2} \pdd{f}{x_i}(x)$.
+\end{definition}
+
+\begin{definition}[vectorLaplacian]
+\label{def:vectorLaplacian}
+\lean{MaxwellWave.vectorLaplacian}
+\leanok
+\uses{def:partialDerivComp2}
+Vector Laplacian:
+$(\lapl \vect{F})(x)_j = \sum_{i=0}^{2} \pdd{F_j}{x_i}(x)$.
+\end{definition}
+
+\section{Smoothness Predicates}
+
+\begin{definition}[IsC2Scalar]
+\label{def:IsC2Scalar}
+\lean{MaxwellWave.IsC2Scalar}
+\leanok
+\uses{def:ScalarField}
+A scalar field is $C^2$: $\mathrm{ContDiff}\;\R\;2\;f$.
+\end{definition}
+
+\begin{definition}[IsC2Vector]
+\label{def:IsC2Vector}
+\lean{MaxwellWave.IsC2Vector}
+\leanok
+\uses{def:VectorField}
+A vector field is $C^2$: each component $y \mapsto F(y)_j$ is $\mathrm{ContDiff}\;\R\;2$.
+\end{definition}
+
+\section{Fundamental Lemma and Vector Identities}
+
+\begin{lemma}[Symmetry of mixed partials]
+\label{lem:fderiv_apply_comm}
+\lean{MaxwellWave.fderiv_apply_comm}
+\leanok
+\uses{def:IsC2Scalar}
+For $C^2$ scalar fields, mixed partial derivatives commute (Clairaut/Schwarz):
+\[
+\frac{\partial}{\partial w}\!\left(\pd{f}{v}\right)\!(x)
+= \frac{\partial}{\partial v}\!\left(\pd{f}{w}\right)\!(x).
+\]
+Connects to Mathlib's \texttt{IsSymmSndFDerivAt} via the chain rule for CLM evaluation.
+\end{lemma}
+
+\begin{theorem}[Curl of gradient is zero]
+\label{thm:curl_gradient_eq_zero}
+\lean{MaxwellWave.curl_gradient_eq_zero}
+\leanok
+\uses{def:curl, def:gradient, def:IsC2Scalar, lem:fderiv_apply_comm}
+$\curl(\grad f) = 0$ for $C^2$ scalar fields.
+Each component $\pd{}{x_i}\pd{f}{x_j} - \pd{}{x_j}\pd{f}{x_i} = 0$
+by symmetry of mixed partials.
+\end{theorem}
+
+\begin{theorem}[Divergence of curl is zero]
+\label{thm:divergence_curl_eq_zero}
+\lean{MaxwellWave.divergence_curl_eq_zero}
+\leanok
+\uses{def:divergence, def:curl, def:IsC2Vector, lem:fderiv_apply_comm}
+$\divg(\curl \vect{F}) = 0$ for $C^2$ vector fields.
+Expands to a sum of mixed partials that cancel pairwise.
+\end{theorem}
+
+\begin{theorem}[Curl-curl identity]
+\label{thm:curl_curl_eq_grad_div_sub_laplacian}
+\lean{MaxwellWave.curl_curl_eq_grad_div_sub_laplacian}
+\leanok
+\uses{def:curl, def:gradient, def:divergence, def:vectorLaplacian, def:partialDeriv, def:IsC2Vector, lem:fderiv_apply_comm}
+$\curl(\curl \vect{F}) = \grad(\divg \vect{F}) - \lapl \vect{F}$.
+The critical identity for deriving wave equations. Proved component-by-component
+using symmetry of mixed partials.
+\end{theorem}
+
+\section{Curl Linearity}
+
+\begin{lemma}[IsC2Vector.differentiableAt]
+\label{lem:IsC2Vector_differentiableAt}
+\lean{MaxwellWave.IsC2Vector.differentiableAt}
+\leanok
+\uses{def:IsC2Vector}
+$C^2$ vector field components are differentiable at every point.
+\end{lemma}
+
+\begin{theorem}[Curl distributes over negation]
+\label{thm:curl_neg}
+\lean{MaxwellWave.curl_neg}
+\leanok
+\uses{def:curl}
+$\curl(-\vect{F}) = -(\curl \vect{F})$.
+\end{theorem}
+
+\begin{theorem}[Curl distributes over addition]
+\label{thm:curl_add}
+\lean{MaxwellWave.curl_add}
+\leanok
+\uses{def:curl}
+$\curl(\vect{F} + \vect{G}) = \curl \vect{F} + \curl \vect{G}$,
+given differentiability of components.
+\end{theorem}
+
+\begin{theorem}[Curl distributes over scalar multiplication]
+\label{thm:curl_const_mul}
+\lean{MaxwellWave.curl_const_mul}
+\leanok
+\uses{def:curl}
+$\curl(c\,\vect{F}) = c\,(\curl \vect{F})$,
+given differentiability of components.
+\end{theorem}
+
+
+\chapter{Electromagnetic Waves}
+\label{chap:maxwell}
+
+Maxwell's equations in linear, isotropic, homogeneous media and the derivation
+of wave equations for vacuum, dielectric, and conducting media.
+
+\section{Medium Parameters}
+
+\begin{definition}[Medium]
+\label{def:Medium}
+\lean{MaxwellWave.Medium}
+\leanok
+Parameters of a linear, isotropic, homogeneous electromagnetic medium:
+permittivity $\varepsilon > 0$, permeability $\mu > 0$, conductivity $\sigma \ge 0$.
+\end{definition}
+
+\begin{definition}[Medium.waveSpeed]
+\label{def:Medium_waveSpeed}
+\lean{MaxwellWave.Medium.waveSpeed}
+\leanok
+\uses{def:Medium}
+Wave speed in the medium: $v = 1/\sqrt{\mu\varepsilon}$.
+\end{definition}
+
+\begin{definition}[Medium.waveSpeedSq]
+\label{def:Medium_waveSpeedSq}
+\lean{MaxwellWave.Medium.waveSpeedSq}
+\leanok
+\uses{def:Medium}
+Squared wave speed: $v^2 = 1/(\mu\varepsilon)$.
+\end{definition}
+
+\begin{lemma}[Medium.waveSpeedSq\_pos]
+\label{lem:Medium_waveSpeedSq_pos}
+\lean{MaxwellWave.Medium.waveSpeedSq_pos}
+\leanok
+\uses{def:Medium_waveSpeedSq}
+$v^2 > 0$ since $\mu, \varepsilon > 0$.
+\end{lemma}
+
+\begin{lemma}[Medium.mu\_epsilon\_pos]
+\label{lem:Medium_mu_epsilon_pos}
+\lean{MaxwellWave.Medium.mu_epsilon_pos}
+\leanok
+\uses{def:Medium}
+$\mu\varepsilon > 0$.
+\end{lemma}
+
+\begin{lemma}[Medium.mu\_ne\_zero]
+\label{lem:Medium_mu_ne_zero}
+\lean{MaxwellWave.Medium.mu_ne_zero}
+\leanok
+\uses{def:Medium}
+$\mu \ne 0$.
+\end{lemma}
+
+\begin{lemma}[Medium.epsilon\_ne\_zero]
+\label{lem:Medium_epsilon_ne_zero}
+\lean{MaxwellWave.Medium.epsilon_ne_zero}
+\leanok
+\uses{def:Medium}
+$\varepsilon \ne 0$.
+\end{lemma}
+
+\begin{definition}[vacuum]
+\label{def:vacuum}
+\lean{MaxwellWave.vacuum}
+\leanok
+\uses{def:Medium}
+Vacuum medium: $\varepsilon = \varepsilon_0$, $\mu = \mu_0$, $\sigma = 0$.
+\end{definition}
+
+\begin{definition}[dielectric]
+\label{def:dielectric}
+\lean{MaxwellWave.dielectric}
+\leanok
+\uses{def:Medium}
+A lossless dielectric: general $\varepsilon, \mu$ with $\sigma = 0$.
+\end{definition}
+
+\begin{definition}[conductor]
+\label{def:conductor}
+\lean{MaxwellWave.conductor}
+\leanok
+\uses{def:Medium}
+A conducting medium: $\sigma > 0$ introduces damping.
+\end{definition}
+
+\section{Maxwell's Equations}
+
+\begin{definition}[MaxwellSystem]
+\label{def:MaxwellSystem}
+\lean{MaxwellWave.MaxwellSystem}
+\leanok
+\uses{def:Medium, def:TDVectorField, def:TDScalarField, def:divergence, def:curl, def:timeDerivComp, def:IsC2Vector}
+Maxwell's equations in a linear medium, packaging: Gauss's law ($\divg \vect{E} = \rho/\varepsilon$),
+no monopoles ($\divg \vect{B} = 0$), Faraday ($\curl \vect{E} = -\pd{\vect{B}}{t}$),
+and Amp\`{e}re-Maxwell ($\curl \vect{B} = \mu(\vect{J}_{\mathrm{free}} + \sigma\vect{E}) + \mu\varepsilon\pd{\vect{E}}{t}$).
+\end{definition}
+
+\begin{definition}[SourceFreeMaxwell]
+\label{def:SourceFreeMaxwell}
+\lean{MaxwellWave.SourceFreeMaxwell}
+\leanok
+\uses{def:MaxwellSystem}
+A source-free Maxwell system: $\rho = 0$, $\vect{J}_{\mathrm{free}} = 0$.
+\end{definition}
+
+\begin{lemma}[SourceFreeMaxwell.gauss\_simplified]
+\label{lem:gauss_simplified}
+\lean{MaxwellWave.SourceFreeMaxwell.gauss_simplified}
+\leanok
+\uses{def:SourceFreeMaxwell, def:divergence}
+In source-free systems, $\divg \vect{E} = 0$.
+\end{lemma}
+
+\begin{lemma}[SourceFreeMaxwell.ampere\_simplified]
+\label{lem:ampere_simplified}
+\lean{MaxwellWave.SourceFreeMaxwell.ampere_simplified}
+\leanok
+\uses{def:SourceFreeMaxwell, def:curl, def:timeDerivComp}
+In source-free systems, $\curl \vect{B} = \mu\sigma\vect{E} + \mu\varepsilon\pd{\vect{E}}{t}$.
+\end{lemma}
+
+\section{Wave Equation Derivation}
+
+\begin{definition}[SufficientlySmooth]
+\label{def:SufficientlySmooth}
+\lean{MaxwellWave.SufficientlySmooth}
+\leanok
+\uses{def:SourceFreeMaxwell, def:IsC2Vector, def:timeDerivComp}
+Smoothness hypotheses for the wave equation derivation: curl-time commutativity,
+$C^2$ conditions for fields and their time derivatives, and differentiability
+of time derivatives.
+\end{definition}
+
+\begin{theorem}[General wave equation for E]
+\label{thm:general_wave_equation_E}
+\lean{MaxwellWave.general_wave_equation_E}
+\leanok
+\uses{def:SourceFreeMaxwell, def:SufficientlySmooth, def:vectorLaplacian, def:timeDerivComp, def:timeDerivComp2, thm:curl_curl_eq_grad_div_sub_laplacian, lem:gauss_simplified, lem:ampere_simplified, thm:curl_neg}
+\[
+\lapl \vect{E} = \mu\varepsilon\,\pdd{\vect{E}}{t} + \mu\sigma\,\pd{\vect{E}}{t}.
+\]
+Derived by taking curl of Faraday, applying curl-curl identity with $\divg\vect{E}=0$,
+and substituting Amp\`{e}re's law.
+\end{theorem}
+
+\begin{theorem}[General wave equation for B]
+\label{thm:general_wave_equation_B}
+\lean{MaxwellWave.general_wave_equation_B}
+\leanok
+\uses{def:SourceFreeMaxwell, def:SufficientlySmooth, def:vectorLaplacian, def:timeDerivComp, def:timeDerivComp2, thm:curl_curl_eq_grad_div_sub_laplacian, lem:ampere_simplified, thm:curl_neg, thm:curl_add, thm:curl_const_mul}
+\[
+\lapl \vect{B} = \mu\varepsilon\,\pdd{\vect{B}}{t} + \mu\sigma\,\pd{\vect{B}}{t}.
+\]
+Derived by taking curl of Amp\`{e}re, substituting Faraday, and using curl linearity.
+\end{theorem}
+
+\begin{theorem}[Vacuum wave equation for E]
+\label{thm:vacuum_wave_equation_E}
+\lean{MaxwellWave.vacuum_wave_equation_E}
+\leanok
+\uses{def:vacuum, thm:general_wave_equation_E}
+$\lapl \vect{E} = \mu_0\varepsilon_0\,\pdd{\vect{E}}{t}$ in vacuum ($\sigma = 0$).
+\end{theorem}
+
+\begin{theorem}[Vacuum wave equation for B]
+\label{thm:vacuum_wave_equation_B}
+\lean{MaxwellWave.vacuum_wave_equation_B}
+\leanok
+\uses{def:vacuum, thm:general_wave_equation_B}
+$\lapl \vect{B} = \mu_0\varepsilon_0\,\pdd{\vect{B}}{t}$ in vacuum.
+\end{theorem}
+
+\begin{theorem}[Vacuum wave speed]
+\label{thm:vacuum_wave_speed}
+\lean{MaxwellWave.vacuum_wave_speed}
+\leanok
+\uses{def:vacuum, def:Medium_waveSpeed}
+$c = 1/\sqrt{\mu_0\varepsilon_0}$.
+\end{theorem}
+
+\begin{theorem}[Dielectric wave equation for E]
+\label{thm:dielectric_wave_equation_E}
+\lean{MaxwellWave.dielectric_wave_equation_E}
+\leanok
+\uses{def:dielectric, thm:general_wave_equation_E}
+$\lapl \vect{E} = \mu\varepsilon\,\pdd{\vect{E}}{t}$ in a lossless dielectric.
+\end{theorem}
+
+\begin{theorem}[Dielectric wave equation for B]
+\label{thm:dielectric_wave_equation_B}
+\lean{MaxwellWave.dielectric_wave_equation_B}
+\leanok
+\uses{def:dielectric, thm:general_wave_equation_B}
+$\lapl \vect{B} = \mu\varepsilon\,\pdd{\vect{B}}{t}$ in a lossless dielectric.
+\end{theorem}
+
+\begin{theorem}[Dielectric wave speed squared]
+\label{thm:dielectric_wave_speed_sq}
+\lean{MaxwellWave.dielectric_wave_speed_sq}
+\leanok
+\uses{def:dielectric, def:Medium_waveSpeedSq}
+$v^2 = 1/(\mu\varepsilon)$ in a dielectric.
+\end{theorem}
+
+\begin{theorem}[Conductor wave equation for E]
+\label{thm:conductor_wave_equation_E}
+\lean{MaxwellWave.conductor_wave_equation_E}
+\leanok
+\uses{def:conductor, thm:general_wave_equation_E}
+$\lapl \vect{E} = \mu\varepsilon\,\pdd{\vect{E}}{t} + \mu\sigma\,\pd{\vect{E}}{t}$
+(telegraph equation).
+\end{theorem}
+
+\begin{theorem}[Conductor wave equation for B]
+\label{thm:conductor_wave_equation_B}
+\lean{MaxwellWave.conductor_wave_equation_B}
+\leanok
+\uses{def:conductor, thm:general_wave_equation_B}
+$\lapl \vect{B} = \mu\varepsilon\,\pdd{\vect{B}}{t} + \mu\sigma\,\pd{\vect{B}}{t}$
+(telegraph equation).
+\end{theorem}
+
+\begin{theorem}[Curl of Faraday]
+\label{thm:curl_of_faraday}
+\lean{MaxwellWave.curl_of_faraday}
+\leanok
+\uses{def:SourceFreeMaxwell, def:SufficientlySmooth, def:curl, def:timeDerivComp, thm:curl_neg}
+$\curl(\curl \vect{E}) = -\pd{}{t}(\curl \vect{B})$.
+\end{theorem}
+
+
+\chapter{Plasma Physics}
+\label{chap:plasma}
+
+Vector algebra for plasma fields, fluid operators, the Lorentz force,
+two-fluid and single-fluid MHD, resistive MHD, equilibrium theory,
+and tokamak/FRC configurations.
+
+\section{Vector Algebra}
+
+\begin{definition}[vec3Cross]
+\label{def:vec3Cross}
+\lean{PlasmaEquations.vec3Cross}
+\leanok
+\uses{def:Vec3}
+Cross product of two vectors: wraps Mathlib's \texttt{crossProduct}.
+\end{definition}
+
+\begin{definition}[vec3Dot]
+\label{def:vec3Dot}
+\lean{PlasmaEquations.vec3Dot}
+\leanok
+\uses{def:Vec3}
+Dot product of two vectors: wraps Mathlib's \texttt{dotProduct}.
+\end{definition}
+
+\begin{definition}[fieldCross]
+\label{def:fieldCross}
+\lean{PlasmaEquations.fieldCross}
+\leanok
+\uses{def:VectorField, def:vec3Cross}
+Pointwise cross product of two vector fields: $(\vect{F}\times\vect{G})(x) = \vect{F}(x)\times\vect{G}(x)$.
+\end{definition}
+
+\begin{definition}[fieldDot]
+\label{def:fieldDot}
+\lean{PlasmaEquations.fieldDot}
+\leanok
+\uses{def:VectorField, def:vec3Dot}
+Pointwise dot product of two vector fields.
+\end{definition}
+
+\begin{definition}[scalarMul]
+\label{def:scalarMul}
+\lean{PlasmaEquations.scalarMul}
+\leanok
+\uses{def:ScalarField, def:VectorField}
+Scalar--vector field multiplication: $(c\vect{F})(x) = c(x)\,\vect{F}(x)$.
+\end{definition}
+
+\begin{definition}[fieldAdd]
+\label{def:fieldAdd}
+\lean{PlasmaEquations.fieldAdd}
+\leanok
+\uses{def:VectorField}
+Pointwise addition of vector fields.
+\end{definition}
+
+\begin{definition}[fieldSub]
+\label{def:fieldSub}
+\lean{PlasmaEquations.fieldSub}
+\leanok
+\uses{def:VectorField}
+Pointwise subtraction of vector fields.
+\end{definition}
+
+\begin{definition}[fieldNeg]
+\label{def:fieldNeg}
+\lean{PlasmaEquations.fieldNeg}
+\leanok
+\uses{def:VectorField}
+Pointwise negation of a vector field.
+\end{definition}
+
+\begin{definition}[tdFieldCross]
+\label{def:tdFieldCross}
+\lean{PlasmaEquations.tdFieldCross}
+\leanok
+\uses{def:TDVectorField, def:vec3Cross}
+Time-dependent pointwise cross product.
+\end{definition}
+
+\begin{definition}[tdScalarMul]
+\label{def:tdScalarMul}
+\lean{PlasmaEquations.tdScalarMul}
+\leanok
+\uses{def:TDScalarField, def:TDVectorField}
+Time-dependent scalar--vector multiplication.
+\end{definition}
+
+\begin{definition}[tdFieldAdd]
+\label{def:tdFieldAdd}
+\lean{PlasmaEquations.tdFieldAdd}
+\leanok
+\uses{def:TDVectorField}
+Time-dependent pointwise addition.
+\end{definition}
+
+\begin{lemma}[cross\_anticomm]
+\label{lem:cross_anticomm}
+\lean{PlasmaEquations.cross_anticomm}
+\leanok
+\uses{def:vec3Cross, def:fieldNeg}
+$\vect{a}\times\vect{b} = -(\vect{b}\times\vect{a})$.
+\end{lemma}
+
+\begin{lemma}[cross\_anticomm\_field]
+\label{lem:cross_anticomm_field}
+\lean{PlasmaEquations.cross_anticomm_field}
+\leanok
+\uses{def:fieldCross, def:fieldNeg}
+Anti-commutativity at the field level.
+\end{lemma}
+
+\begin{lemma}[dot\_self\_cross\_eq\_zero]
+\label{lem:dot_self_cross_eq_zero}
+\lean{PlasmaEquations.dot_self_cross_eq_zero}
+\leanok
+\uses{def:vec3Dot, def:vec3Cross}
+$\vect{a}\cdot(\vect{a}\times\vect{b}) = 0$.
+\end{lemma}
+
+\begin{lemma}[dot\_cross\_self\_eq\_zero]
+\label{lem:dot_cross_self_eq_zero}
+\lean{PlasmaEquations.dot_cross_self_eq_zero}
+\leanok
+\uses{def:vec3Dot, def:vec3Cross}
+$(\vect{a}\times\vect{b})\cdot\vect{b} = 0$.
+\end{lemma}
+
+\begin{lemma}[fieldDot\_self\_cross\_eq\_zero]
+\label{lem:fieldDot_self_cross_eq_zero}
+\lean{PlasmaEquations.fieldDot_self_cross_eq_zero}
+\leanok
+\uses{def:fieldDot, def:fieldCross, lem:dot_self_cross_eq_zero}
+$\vect{F}(x)\cdot(\vect{F}(x)\times\vect{G}(x)) = 0$.
+\end{lemma}
+
+\begin{lemma}[fieldDot\_cross\_self\_eq\_zero]
+\label{lem:fieldDot_cross_self_eq_zero}
+\lean{PlasmaEquations.fieldDot_cross_self_eq_zero}
+\leanok
+\uses{def:fieldDot, def:fieldCross, lem:dot_cross_self_eq_zero}
+$(\vect{F}(x)\times\vect{G}(x))\cdot\vect{G}(x) = 0$.
+\end{lemma}
+
+\section{Fluid Operators}
+
+\begin{definition}[advectiveDerivScalar]
+\label{def:advectiveDerivScalar}
+\lean{PlasmaEquations.advectiveDerivScalar}
+\leanok
+\uses{def:VectorField, def:ScalarField, def:partialDeriv}
+Advective derivative of a scalar field:
+$(\vect{v}\cdot\grad)f = \sum_i v_i\,\pd{f}{x_i}$.
+\end{definition}
+
+\begin{definition}[advectiveDerivVector]
+\label{def:advectiveDerivVector}
+\lean{PlasmaEquations.advectiveDerivVector}
+\leanok
+\uses{def:VectorField, def:partialDerivComp}
+Advective derivative of a vector field:
+$((\vect{v}\cdot\grad)\vect{F})_j = \sum_i v_i\,\pd{F_j}{x_i}$.
+\end{definition}
+
+\begin{definition}[materialDerivScalar]
+\label{def:materialDerivScalar}
+\lean{PlasmaEquations.materialDerivScalar}
+\leanok
+\uses{def:timeDeriv, def:advectiveDerivScalar}
+Material derivative of a scalar field:
+$\Dt{f} = \pd{f}{t} + (\vect{v}\cdot\grad)f$.
+\end{definition}
+
+\begin{definition}[materialDerivVector]
+\label{def:materialDerivVector}
+\lean{PlasmaEquations.materialDerivVector}
+\leanok
+\uses{def:timeDerivComp, def:advectiveDerivVector}
+Material derivative of a vector field:
+$\left(\Dt{\vect{F}}\right)_j = \pd{F_j}{t} + ((\vect{v}\cdot\grad)\vect{F})_j$.
+\end{definition}
+
+\section{Lorentz Force}
+
+\begin{definition}[LorentzForcePerVolume]
+\label{def:LorentzForcePerVolume}
+\lean{PlasmaEquations.LorentzForcePerVolume}
+\leanok
+\uses{def:ScalarField, def:VectorField, def:fieldCross}
+Lorentz force per unit volume:
+$\vect{f} = \rho_c\,\vect{E} + \vect{J}\times\vect{B}$.
+\end{definition}
+
+\begin{theorem}[lorentz\_dot\_B]
+\label{thm:lorentz_dot_B}
+\lean{PlasmaEquations.lorentz_dot_B}
+\leanok
+\uses{def:LorentzForcePerVolume, def:vec3Dot, lem:dot_cross_self_eq_zero}
+$\vect{f}_L\cdot\vect{B} = \rho_c(\vect{E}\cdot\vect{B})$
+because $(\vect{J}\times\vect{B})\cdot\vect{B} = 0$.
+\end{theorem}
+
+\section{Two-Fluid Model}
+
+\begin{definition}[PlasmaSpecies]
+\label{def:PlasmaSpecies}
+\lean{PlasmaEquations.PlasmaSpecies}
+\leanok
+A plasma species with charge $q$ and mass $m > 0$.
+\end{definition}
+
+\begin{definition}[TwoFluidSystem]
+\label{def:TwoFluidSystem}
+\lean{PlasmaEquations.TwoFluidSystem}
+\leanok
+\uses{def:PlasmaSpecies, def:TDScalarField, def:TDVectorField, def:timeDeriv, def:divergence, def:materialDerivVector, def:fieldCross, def:partialDeriv}
+Two-fluid equations for a single species: continuity and momentum.
+\end{definition}
+
+\section{Ideal MHD}
+
+\begin{definition}[MHDConstants]
+\label{def:MHDConstants}
+\lean{PlasmaEquations.MHDConstants}
+\leanok
+Physical constants: vacuum permeability $\mu_0 > 0$ and adiabatic index $\gamma > 1$.
+\end{definition}
+
+\begin{lemma}[MHDConstants.$\mu_0$\_ne\_zero]
+\label{lem:MHDConstants_mu0_ne_zero}
+\lean{PlasmaEquations.MHDConstants.μ₀_ne_zero}
+\leanok
+\uses{def:MHDConstants}
+$\mu_0 \ne 0$.
+\end{lemma}
+
+\begin{lemma}[MHDConstants.$\mu_0$\_pos]
+\label{lem:MHDConstants_mu0_pos}
+\lean{PlasmaEquations.MHDConstants.μ₀_pos}
+\leanok
+\uses{def:MHDConstants}
+$\mu_0 > 0$.
+\end{lemma}
+
+\begin{lemma}[MHDConstants.$\gamma$\_pos]
+\label{lem:MHDConstants_gamma_pos}
+\lean{PlasmaEquations.MHDConstants.γ_pos}
+\leanok
+\uses{def:MHDConstants}
+$\gamma > 0$.
+\end{lemma}
+
+\begin{definition}[IdealMHD]
+\label{def:IdealMHD}
+\lean{PlasmaEquations.IdealMHD}
+\leanok
+\uses{def:MHDConstants, def:TDScalarField, def:TDVectorField, def:timeDeriv, def:timeDerivComp, def:divergence, def:curl, def:materialDerivVector, def:advectiveDerivScalar, def:fieldCross, def:vec3Cross, def:partialDeriv, def:IsC2Vector}
+The ideal MHD system: mass conservation, momentum ($\rho\Dt{\vect{v}} = \vect{J}\times\vect{B} - \grad p$),
+adiabatic energy, induction ($\pd{\vect{B}}{t} = \curl(\vect{v}\times\vect{B})$),
+$\divg\vect{B} = 0$, and Amp\`{e}re's law ($\curl\vect{B} = \mu_0\vect{J}$).
+\end{definition}
+
+\begin{theorem}[Ideal induction from Faraday + Ohm]
+\label{thm:ideal_induction_from_faraday_ohm}
+\lean{PlasmaEquations.IdealMHD.ideal_induction_from_faraday_ohm}
+\leanok
+\uses{def:IdealMHD, def:curl, def:timeDerivComp, def:vec3Cross, thm:curl_neg}
+If $\pd{\vect{B}}{t} = -\curl\vect{E}$ and $\vect{E} = -\vect{v}\times\vect{B}$ (ideal Ohm's law),
+then $\pd{\vect{B}}{t} = \curl(\vect{v}\times\vect{B})$.
+\end{theorem}
+
+\begin{theorem}[J from Amp\`{e}re]
+\label{thm:J_from_ampere}
+\lean{PlasmaEquations.IdealMHD.J_from_ampere}
+\leanok
+\uses{def:IdealMHD, def:curl, lem:MHDConstants_mu0_ne_zero}
+$\vect{J} = (1/\mu_0)\,\curl\vect{B}$.
+\end{theorem}
+
+\begin{theorem}[div B preserved]
+\label{thm:div_B_preserved}
+\lean{PlasmaEquations.IdealMHD.div_B_preserved}
+\leanok
+\uses{def:IdealMHD, def:divergence}
+$\divg\vect{B} = 0$ at all times (from the solenoidal axiom).
+\end{theorem}
+
+\section{MHD Equilibrium}
+
+\begin{definition}[MHDEquilibrium]
+\label{def:MHDEquilibrium}
+\lean{PlasmaEquations.MHDEquilibrium}
+\leanok
+\uses{def:MHDConstants, def:ScalarField, def:VectorField, def:partialDeriv, def:fieldCross, def:curl, def:divergence, def:IsC2Vector}
+Static MHD equilibrium: $\grad p = \vect{J}\times\vect{B}$
+with $\curl\vect{B} = \mu_0\vect{J}$ and $\divg\vect{B} = 0$.
+\end{definition}
+
+\begin{theorem}[B dot grad p = 0]
+\label{thm:B_dot_grad_p_eq_zero}
+\lean{PlasmaEquations.MHDEquilibrium.B_dot_grad_p_eq_zero}
+\leanok
+\uses{def:MHDEquilibrium, def:vec3Dot, def:gradient, def:fieldCross}
+$\vect{B}\cdot\grad p = 0$: magnetic field lines lie on pressure surfaces.
+\end{theorem}
+
+\begin{theorem}[J dot grad p = 0]
+\label{thm:J_dot_grad_p_eq_zero}
+\lean{PlasmaEquations.MHDEquilibrium.J_dot_grad_p_eq_zero}
+\leanok
+\uses{def:MHDEquilibrium, def:vec3Dot, def:gradient, lem:fieldDot_self_cross_eq_zero}
+$\vect{J}\cdot\grad p = 0$: current lines lie on pressure surfaces.
+\end{theorem}
+
+\begin{theorem}[Force balance cross form]
+\label{thm:force_balance_cross_form}
+\lean{PlasmaEquations.MHDEquilibrium.force_balance_cross_form}
+\leanok
+\uses{def:MHDEquilibrium, def:partialDeriv, def:fieldCross, def:curl, lem:MHDConstants_mu0_ne_zero}
+$\grad p = (1/\mu_0)(\curl\vect{B})\times\vect{B}$.
+\end{theorem}
+
+\begin{theorem}[Magnetic pressure form]
+\label{thm:magnetic_pressure_form}
+\lean{PlasmaEquations.MHDEquilibrium.magnetic_pressure_form}
+\leanok
+\uses{def:MHDEquilibrium, def:partialDeriv, def:advectiveDerivVector, def:vec3Dot, thm:force_balance_cross_form}
+$\grad p = (1/\mu_0)((\vect{B}\cdot\grad)\vect{B} - \grad(|\vect{B}|^2/2))$:
+separates magnetic tension and magnetic pressure.
+\end{theorem}
+
+\section{Cylindrical Coordinates}
+
+\begin{definition}[cylR]
+\label{def:cylR}
+\lean{PlasmaEquations.cylR}
+\leanok
+\uses{def:Vec3}
+Major radius $R = x_0$ from a point $(R, \varphi, Z)$.
+\end{definition}
+
+\begin{definition}[cylZ]
+\label{def:cylZ}
+\lean{PlasmaEquations.cylZ}
+\leanok
+\uses{def:Vec3}
+Vertical coordinate $Z = x_2$.
+\end{definition}
+
+\begin{definition}[IsAxisymmetric]
+\label{def:IsAxisymmetric}
+\lean{PlasmaEquations.IsAxisymmetric}
+\leanok
+\uses{def:ScalarField, def:partialDeriv}
+A scalar field is axisymmetric: $\pd{f}{\varphi} = 0$.
+\end{definition}
+
+\begin{definition}[PoloidalFlux]
+\label{def:PoloidalFlux}
+\lean{PlasmaEquations.PoloidalFlux}
+\leanok
+\uses{def:ScalarField, def:IsC2Scalar, def:IsAxisymmetric}
+Poloidal flux function $\psi(R, Z)$ with $C^2$ smoothness and axisymmetry.
+\end{definition}
+
+\begin{definition}[GradShafranovOp]
+\label{def:GradShafranovOp}
+\lean{PlasmaEquations.GradShafranovOp}
+\leanok
+\uses{def:ScalarField, def:partialDeriv, def:partialDeriv2, def:cylR}
+The Grad-Shafranov operator:
+$\Delta^*\psi = \pdd{\psi}{R} - \frac{1}{R}\pd{\psi}{R} + \pdd{\psi}{Z}$.
+\end{definition}
+
+\section{Grad-Shafranov Equation}
+
+\begin{definition}[GradShafranovEquation]
+\label{def:GradShafranovEquation}
+\lean{PlasmaEquations.GradShafranovEquation}
+\leanok
+\uses{def:MHDConstants, def:PoloidalFlux, def:GradShafranovOp, def:cylR}
+The Grad-Shafranov equation for tokamak equilibrium:
+$\Delta^*\psi = -\mu_0 R^2 p'(\psi) - g(\psi)g'(\psi)$.
+\end{definition}
+
+\begin{definition}[GradShafranovEquation.pressure]
+\label{def:GS_pressure}
+\lean{PlasmaEquations.GradShafranovEquation.pressure}
+\leanok
+\uses{def:GradShafranovEquation}
+Pressure profile $p(x) = p(\psi(x))$.
+\end{definition}
+
+\begin{theorem}[Pressure on flux surfaces]
+\label{thm:gs_pressure_flux_surface}
+\lean{PlasmaEquations.GradShafranovEquation.gs_pressure_flux_surface}
+\leanok
+\uses{def:GS_pressure}
+If $\psi(x) = \psi(y)$, then $p(x) = p(y)$: pressure is constant on flux surfaces.
+\end{theorem}
+
+\begin{theorem}[g on flux surfaces]
+\label{thm:gs_g_flux_surface}
+\lean{PlasmaEquations.GradShafranovEquation.gs_g_flux_surface}
+\leanok
+\uses{def:GradShafranovEquation}
+$g$ is constant on flux surfaces.
+\end{theorem}
+
+\begin{definition}[GradShafranovEquation.magField]
+\label{def:GS_magField}
+\lean{PlasmaEquations.GradShafranovEquation.magField}
+\leanok
+\uses{def:GradShafranovEquation, def:cylR, def:partialDeriv}
+Magnetic field from flux:
+$\vect{B} = (-\frac{1}{R}\pd{\psi}{Z},\; \frac{g(\psi)}{R},\; \frac{1}{R}\pd{\psi}{R})$.
+\end{definition}
+
+\begin{theorem}[GS implies equilibrium]
+\label{thm:gs_is_equilibrium}
+\lean{PlasmaEquations.GradShafranovEquation.gs_is_equilibrium}
+\leanok
+\uses{def:GradShafranovEquation, def:GS_pressure, def:GS_magField, def:partialDeriv, def:fieldCross}
+The Grad-Shafranov equation implies $\grad p = \vect{J}\times\vect{B}$
+in cylindrical geometry ($R \ne 0$).
+\end{theorem}
+
+\begin{theorem}[Solov'ev linearization]
+\label{thm:gs_solovev_linear}
+\lean{PlasmaEquations.GradShafranovEquation.gs_solovev_linear}
+\leanok
+\uses{def:GradShafranovEquation, def:GradShafranovOp, def:cylR}
+When $p(\psi) = p_0\psi$ and $g^2(\psi) = g_0^2 + 2\alpha\psi$ are linear,
+the GS equation becomes $\Delta^*\psi = -\mu_0 R^2 p_0 - \alpha$.
+\end{theorem}
+
+\section{Resistive MHD}
+
+\begin{definition}[OhmsLaw]
+\label{def:OhmsLaw}
+\lean{PlasmaEquations.OhmsLaw}
+\leanok
+Ohm's law parameters: resistivity $\eta \ge 0$.
+\end{definition}
+
+\begin{definition}[ResistiveMHD]
+\label{def:ResistiveMHD}
+\lean{PlasmaEquations.ResistiveMHD}
+\leanok
+\uses{def:MHDConstants, def:OhmsLaw, def:TDScalarField, def:TDVectorField, def:timeDeriv, def:timeDerivComp, def:divergence, def:curl, def:materialDerivVector, def:advectiveDerivScalar, def:fieldCross, def:vec3Cross, def:partialDeriv, def:IsC2Vector}
+Resistive MHD: same as ideal but with $\vect{E} + \vect{v}\times\vect{B} = \eta\vect{J}$.
+Induction becomes $\pd{\vect{B}}{t} = \curl(\vect{v}\times\vect{B} - \eta\vect{J})$.
+\end{definition}
+
+\begin{theorem}[Resistive reduces to ideal]
+\label{thm:resistive_reduces_to_ideal}
+\lean{PlasmaEquations.ResistiveMHD.resistive_reduces_to_ideal}
+\leanok
+\uses{def:ResistiveMHD, def:OhmsLaw, def:curl, def:timeDerivComp, def:vec3Cross}
+When $\eta = 0$, the resistive induction equation reduces to the ideal one.
+\end{theorem}
+
+\begin{theorem}[Resistive induction diffusion form]
+\label{thm:resistive_induction_diffusion_form}
+\lean{PlasmaEquations.ResistiveMHD.resistive_induction_diffusion_form}
+\leanok
+\uses{def:ResistiveMHD, def:curl, def:timeDerivComp, def:vec3Cross, thm:curl_add, thm:curl_const_mul}
+$\pd{\vect{B}}{t} = \curl(\vect{v}\times\vect{B}) - \eta\,\curl\vect{J}$:
+splits convection and diffusion terms.
+\end{theorem}
+
+\section{FRC Equilibrium}
+
+\begin{definition}[FRCEquilibrium]
+\label{def:FRCEquilibrium}
+\lean{PlasmaEquations.FRCEquilibrium}
+\leanok
+\uses{def:MHDConstants}
+FRC equilibrium: radial profiles $p(R)$, $B_z(R)$, $B_\theta(R)$
+satisfying radial pressure balance with field reversal at the separatrix.
+\end{definition}
+
+\begin{theorem}[FRC no-toroidal balance]
+\label{thm:frc_no_toroidal_balance}
+\lean{PlasmaEquations.FRCEquilibrium.frc_no_toroidal_balance}
+\leanok
+\uses{def:FRCEquilibrium}
+With $B_\theta = 0$: $\frac{dp}{dR} + \frac{1}{\mu_0}B_z\frac{dB_z}{dR} = 0$.
+\end{theorem}
+
+\begin{theorem}[FRC total pressure conservation]
+\label{thm:frc_total_pressure_conservation}
+\lean{PlasmaEquations.FRCEquilibrium.frc_total_pressure_conservation}
+\leanok
+\uses{def:FRCEquilibrium}
+$p(R) = (B_{\mathrm{ext}}^2 - B_z(R)^2)/(2\mu_0)$
+when total pressure is conserved.
+\end{theorem}
+
+\begin{theorem}[FRC beta at separatrix]
+\label{thm:frc_beta_at_separatrix}
+\lean{PlasmaEquations.FRCEquilibrium.frc_beta_at_separatrix}
+\leanok
+\uses{def:FRCEquilibrium}
+$\beta = 1$ at the separatrix: $2\mu_0 p(R_s) = B_{\mathrm{ext}}^2$.
+\end{theorem}
+
+\begin{definition}[RotamakDrive]
+\label{def:RotamakDrive}
+\lean{PlasmaEquations.RotamakDrive}
+\leanok
+RMF drive parameters: amplitude $B_\omega > 0$, frequency $\omega > 0$.
+\end{definition}
+
+\begin{definition}[RotamakSystem]
+\label{def:RotamakSystem}
+\lean{PlasmaEquations.RotamakSystem}
+\leanok
+\uses{def:FRCEquilibrium, def:RotamakDrive, def:MHDConstants}
+A Rotamak: FRC sustained by a rotating magnetic field with 1D Amp\`{e}re's law
+$dB_z/dR = -\mu_0 J_\theta$.
+\end{definition}
+
+\begin{theorem}[Rotamak Amp\`{e}re consistency]
+\label{thm:rotamak_ampere_consistency}
+\lean{PlasmaEquations.RotamakSystem.rotamak_ampere_consistency}
+\leanok
+\uses{def:RotamakSystem, lem:MHDConstants_mu0_pos}
+Inside the separatrix where $B_z$ decreases ($dB_z/dR < 0$),
+the toroidal current $J_\theta > 0$.
+\end{theorem}
+
+
+\chapter{Incompressible Navier-Stokes}
+\label{chap:ns}
+
+The incompressible Navier-Stokes equations, Euler equations (inviscid limit),
+vorticity dynamics, and the pressure Poisson equation.
+
+\section{Equations of Motion}
+
+\begin{definition}[FluidConstants]
+\label{def:FluidConstants}
+\lean{NavierStokes.FluidConstants}
+\leanok
+Fluid constants: density $\rho > 0$, dynamic viscosity $\mu \ge 0$.
+\end{definition}
+
+\begin{lemma}[FluidConstants.$\rho$\_ne\_zero]
+\label{lem:FluidConstants_rho_ne_zero}
+\lean{NavierStokes.FluidConstants.ρ_ne_zero}
+\leanok
+\uses{def:FluidConstants}
+$\rho \ne 0$.
+\end{lemma}
+
+\begin{lemma}[FluidConstants.$\rho$\_pos]
+\label{lem:FluidConstants_rho_pos}
+\lean{NavierStokes.FluidConstants.ρ_pos}
+\leanok
+\uses{def:FluidConstants}
+$\rho > 0$.
+\end{lemma}
+
+\begin{definition}[FluidConstants.$\nu$]
+\label{def:FluidConstants_nu}
+\lean{NavierStokes.FluidConstants.ν}
+\leanok
+\uses{def:FluidConstants}
+Kinematic viscosity $\nu = \mu/\rho$.
+\end{definition}
+
+\begin{lemma}[FluidConstants.$\nu$\_nonneg]
+\label{lem:FluidConstants_nu_nonneg}
+\lean{NavierStokes.FluidConstants.ν_nonneg}
+\leanok
+\uses{def:FluidConstants_nu}
+$\nu \ge 0$.
+\end{lemma}
+
+\begin{definition}[IncompressibleNS]
+\label{def:IncompressibleNS}
+\lean{NavierStokes.IncompressibleNS}
+\leanok
+\uses{def:FluidConstants, def:TDVectorField, def:TDScalarField, def:divergence, def:materialDerivVector, def:partialDeriv, def:vectorLaplacian, def:IsC2Vector, def:IsC2Scalar}
+Incompressible Navier-Stokes: $\divg\vect{v} = 0$ and
+$\rho\Dt{\vect{v}} = -\grad p + \mu\lapl\vect{v} + \vect{f}$.
+\end{definition}
+
+\begin{theorem}[Momentum per unit mass]
+\label{thm:momentum_per_unit_mass}
+\lean{NavierStokes.IncompressibleNS.momentum_per_unit_mass}
+\leanok
+\uses{def:IncompressibleNS, def:FluidConstants_nu, def:materialDerivVector, def:partialDeriv, def:vectorLaplacian, lem:FluidConstants_rho_ne_zero}
+$\Dt{\vect{v}} = -\frac{1}{\rho}\grad p + \nu\lapl\vect{v} + \frac{1}{\rho}\vect{f}$.
+\end{theorem}
+
+\begin{theorem}[Continuity from incompressible]
+\label{thm:continuity_from_incompressible}
+\lean{NavierStokes.IncompressibleNS.continuity_from_incompressible}
+\leanok
+\uses{def:IncompressibleNS, def:divergence}
+$\divg(\rho\vect{v}) = 0$ since $\rho$ is constant and $\divg\vect{v} = 0$.
+\end{theorem}
+
+\section{Euler Equations}
+
+\begin{theorem}[Euler momentum]
+\label{thm:euler_momentum}
+\lean{NavierStokes.IncompressibleNS.euler_momentum}
+\leanok
+\uses{def:IncompressibleNS, def:materialDerivVector, def:partialDeriv}
+When $\mu = 0$: $\rho\Dt{\vect{v}} = -\grad p + \vect{f}$.
+\end{theorem}
+
+\begin{theorem}[Euler momentum per unit mass]
+\label{thm:euler_momentum_per_unit_mass}
+\lean{NavierStokes.IncompressibleNS.euler_momentum_per_unit_mass}
+\leanok
+\uses{thm:momentum_per_unit_mass}
+When $\mu = 0$: $\Dt{\vect{v}} = -\frac{1}{\rho}\grad p + \frac{1}{\rho}\vect{f}$.
+\end{theorem}
+
+\section{Vorticity}
+
+\begin{definition}[vorticity]
+\label{def:vorticity}
+\lean{NavierStokes.vorticity}
+\leanok
+\uses{def:TDVectorField, def:curl}
+Vorticity: $\vect{\omega}(t,x) = \curl\vect{v}(t,x)$.
+\end{definition}
+
+\begin{theorem}[div vorticity = 0]
+\label{thm:div_vorticity_eq_zero}
+\lean{NavierStokes.div_vorticity_eq_zero}
+\leanok
+\uses{def:vorticity, def:divergence, def:IncompressibleNS, thm:divergence_curl_eq_zero}
+$\divg\vect{\omega} = 0$: vorticity is solenoidal.
+\end{theorem}
+
+\begin{theorem}[curl pressure gradient = 0]
+\label{thm:curl_pressure_gradient_eq_zero}
+\lean{NavierStokes.curl_pressure_gradient_eq_zero}
+\leanok
+\uses{def:IncompressibleNS, def:curl, def:gradient, thm:curl_gradient_eq_zero}
+$\curl(\grad p) = 0$.
+\end{theorem}
+
+\begin{definition}[NSSmoothness]
+\label{def:NSSmoothness}
+\lean{NavierStokes.NSSmoothness}
+\leanok
+\uses{def:IncompressibleNS, def:curl, def:timeDerivComp, def:basisVec}
+Smoothness bundle for vorticity/pressure derivations:
+$C^3$ velocity, curl-time commutativity, and divergence-time commutativity.
+\end{definition}
+
+\begin{lemma}[partialDerivComp\_differentiable]
+\label{lem:partialDerivComp_differentiable}
+\lean{NavierStokes.partialDerivComp_differentiable}
+\leanok
+\uses{def:IsC2Vector, def:partialDerivComp}
+Partial derivatives of $C^2$ vector fields are differentiable.
+\end{lemma}
+
+\begin{theorem}[curl of advective term]
+\label{thm:curl_advective_eq}
+\lean{NavierStokes.curl_advective_eq}
+\leanok
+\uses{def:curl, def:advectiveDerivVector, def:IsC2Vector, def:divergence, lem:fderiv_apply_comm, lem:partialDerivComp_differentiable}
+$\curl((\vect{v}\cdot\grad)\vect{v}) = (\vect{v}\cdot\grad)\vect{\omega} - (\vect{\omega}\cdot\grad)\vect{v}$
+for divergence-free $\vect{v}$. The cornerstone identity for vorticity dynamics.
+\end{theorem}
+
+\begin{theorem}[curl commutes with Laplacian]
+\label{thm:curl_vectorLaplacian_eq}
+\lean{NavierStokes.curl_vectorLaplacian_eq}
+\leanok
+\uses{def:IncompressibleNS, def:NSSmoothness, def:curl, def:vectorLaplacian, lem:fderiv_apply_comm, lem:partialDerivComp_differentiable}
+$\curl(\lapl\vect{v}) = \lapl(\curl\vect{v})$
+for sufficiently smooth incompressible velocity fields.
+\end{theorem}
+
+\begin{theorem}[Vorticity transport equation]
+\label{thm:vorticity_transport}
+\lean{NavierStokes.vorticity_transport}
+\leanok
+\uses{def:IncompressibleNS, def:NSSmoothness, def:curl, def:advectiveDerivVector, def:vectorLaplacian, def:timeDerivComp, def:FluidConstants_nu, thm:momentum_per_unit_mass, thm:curl_advective_eq, thm:curl_vectorLaplacian_eq, thm:curl_gradient_eq_zero, thm:curl_neg, thm:curl_add, thm:curl_const_mul}
+\[
+\pd{\vect{\omega}}{t} + (\vect{v}\cdot\grad)\vect{\omega}
+= (\vect{\omega}\cdot\grad)\vect{v} + \nu\lapl\vect{\omega} + \frac{1}{\rho}\curl\vect{f}.
+\]
+The vortex stretching term $(\vect{\omega}\cdot\grad)\vect{v}$ is unique to 3D.
+\end{theorem}
+
+\section{Pressure Poisson Equation}
+
+\begin{theorem}[Pressure Poisson equation]
+\label{thm:pressure_poisson}
+\lean{NavierStokes.pressure_poisson}
+\leanok
+\uses{def:IncompressibleNS, def:NSSmoothness, def:scalarLaplacian, def:partialDerivComp, def:divergence, lem:fderiv_apply_comm, lem:partialDerivComp_differentiable}
+\[
+\lapl_s p = -\rho\sum_{i,k}\pd{v_k}{x_i}\pd{v_i}{x_k} + \divg\vect{f}.
+\]
+The pressure is determined as a constraint enforcing incompressibility.
+\end{theorem}
