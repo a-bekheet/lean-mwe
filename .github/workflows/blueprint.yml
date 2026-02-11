@@ -40,6 +40,14 @@ jobs:
       - name: Install graphviz
         run: sudo apt-get install -y graphviz libgraphviz-dev
 
+      - name: Ensure TeX path resolver is available
+        run: |
+          if ! command -v kpsewhich >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y texlive-binaries
+          fi
+          kpsewhich --version | head -1
+
       - name: Install blueprint
         run: pip install leanblueprint
 
