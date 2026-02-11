@@ -1,11 +1,12 @@
-# Formal Plasma Physics in Lean 4
+# Formal Plasma & Fluid Physics in Lean 4
 
-A fully verified formalization of **electromagnetic wave equations** and **plasma equilibrium physics** in [Lean 4](https://lean-lang.org/) with [Mathlib](https://leanprover-community.github.io/mathlib4_docs/). Two modules build from first principles:
+A fully verified formalization of **electromagnetic wave equations**, **plasma equilibrium physics**, and **incompressible fluid dynamics** in [Lean 4](https://lean-lang.org/) with [Mathlib](https://leanprover-community.github.io/mathlib4_docs/). Three modules build from first principles:
 
 1. **MaxwellWave** — Maxwell's equations to electromagnetic wave equations in vacuum, dielectrics, and conductors
 2. **PlasmaEquations** — Fluid plasma theory from two-fluid equations through MHD to tokamak (Grad-Shafranov) and rotamak (FRC) equilibria
+3. **NavierStokes** — Incompressible Navier-Stokes equations through vorticity transport and pressure Poisson derivations
 
-**Every proof is machine-checked. There are zero `sorry` axioms across both modules.**
+**Every proof is machine-checked. There are zero `sorry` axioms across all modules.**
 
 ---
 
@@ -178,6 +179,64 @@ A Field-Reversed Configuration (FRC) is a compact toroid where the poloidal fiel
 
 ---
 
+## NavierStokes
+
+Formalizes the **incompressible Navier-Stokes equations** for a viscous Newtonian fluid with constant density and viscosity. The mathematical path:
+
+```
+Incompressible Navier-Stokes (ρ Dv/Dt = -∇p + μ∇²v + f,  ∇·v = 0)
+    |             |              \
+    v             v               v
+Euler eqns    Vorticity        Pressure Poisson
+(μ = 0)       transport        (∇²p = -ρ Σ ∂v_j/∂x_i · ∂v_i/∂x_j + ∇·f)
+              (Dω/Dt = (ω·∇)v + ν∇²ω + (1/ρ)∇×f)
+```
+
+### Equations (`Equations.lean`)
+
+- **`FluidConstants`**: Density `ρ > 0`, dynamic viscosity `μ >= 0`, kinematic viscosity `ν = μ/ρ`
+- **`IncompressibleNS`**: Bundles velocity, pressure, body force with incompressibility and momentum axioms
+
+| Theorem | Statement |
+|---------|-----------|
+| `momentum_per_unit_mass` | `Dv/Dt = -(1/ρ)∇p + ν∇²v + (1/ρ)f` |
+| `continuity_from_incompressible` | `∂ρ/∂t + ∇·(ρv) = 0` (trivially from constant ρ and ∇·v = 0) |
+
+### Euler Equations (`Euler.lean`)
+
+Setting `μ = 0` recovers inviscid flow:
+
+| Theorem | Statement |
+|---------|-----------|
+| `euler_momentum` | `ρ Dv/Dt = -∇p + f` when `μ = 0` |
+| `euler_momentum_per_unit_mass` | `Dv/Dt = -(1/ρ)∇p + (1/ρ)f` when `μ = 0` |
+
+### Vorticity Transport (`Vorticity.lean`)
+
+The central result: taking the curl of the momentum equation yields the **vorticity transport equation**, the fundamental equation governing vortex dynamics.
+
+| Theorem | Statement |
+|---------|-----------|
+| `div_vorticity_eq_zero` | `∇·ω = 0` (vorticity is solenoidal) |
+| `curl_pressure_gradient_eq_zero` | `∇×(∇p) = 0` (pressure drops out of vorticity eqn) |
+| `curl_advective_eq` | `∇×((v·∇)v) = (v·∇)ω - (ω·∇)v` (requires Clairaut + incompressibility) |
+| `curl_vectorLaplacian_eq` | `∇×(∇²v) = ∇²ω` (curl commutes with Laplacian) |
+| `vorticity_transport` | `∂ω/∂t + (v·∇)ω = (ω·∇)v + ν∇²ω + (1/ρ)(∇×f)` |
+
+The `curl_advective_eq` proof is the hardest: each component requires Clairaut symmetry of mixed partials, the incompressibility constraint `∇·v = 0`, and explicit algebraic witnesses for `nlinarith` (the vorticity component times the divergence vanishes).
+
+### Pressure Poisson (`PressurePoisson.lean`)
+
+Taking the divergence of the momentum equation and applying incompressibility yields an elliptic equation determining pressure:
+
+| Theorem | Statement |
+|---------|-----------|
+| `pressure_poisson` | `∇²p = -ρ Σᵢⱼ (∂vⱼ/∂xᵢ)(∂vᵢ/∂xⱼ) + ∇·f` |
+
+The proof shows that the time-derivative divergence vanishes (by `∇·v = 0`), the viscous divergence vanishes (by Clairaut + incompressibility), and the advective divergence reduces to the double sum via the product rule.
+
+---
+
 ## Project Structure
 
 ```
@@ -201,20 +260,31 @@ PlasmaEquations/
   RotamakFRC.lean         -- Rotamak / FRC equilibrium (165 lines)
 PlasmaEquations.lean      -- Root module
 
+NavierStokes/
+  Equations.lean          -- FluidConstants, IncompressibleNS (116 lines)
+  Euler.lean              -- Inviscid specialization (47 lines)
+  Vorticity.lean          -- Vorticity transport equation (659 lines)
+  PressurePoisson.lean    -- Pressure Poisson derivation (429 lines)
+NavierStokes.lean         -- Root module
+
+MatlibDraft/
+  Curl.lean               -- Mathlib-style curl API (93 lines)
+MatlibDraft.lean          -- Root module
+
 lakefile.toml           -- Build configuration
 lean-toolchain          -- Lean version pin
 ```
 
 ## Proof Statistics
 
-| | MaxwellWave | PlasmaEquations | **Total** |
-|--|-------------|-----------------|-----------|
-| Lines of Lean 4 | ~930 | ~1,080 | **~2,010** |
-| Definitions | 20 | 23 | **43** |
-| Structures | 4 | 12 | **16** |
-| Theorems | 17 | 18 | **35** |
-| Lemmas | 8 | 9 | **17** |
-| `sorry` axioms | **0** | **0** | **0** |
+| | MaxwellWave | PlasmaEquations | NavierStokes | **Total** |
+|--|-------------|-----------------|--------------|-----------|
+| Lines of Lean 4 | ~930 | ~1,080 | ~1,250 | **~3,260** |
+| Definitions | 20 | 23 | 2 | **45** |
+| Structures | 4 | 12 | 3 | **19** |
+| Theorems | 17 | 18 | 10 | **45** |
+| Lemmas | 8 | 9 | 4 | **21** |
+| `sorry` axioms | **0** | **0** | **0** | **0** |
 
 ## Dependencies
 
